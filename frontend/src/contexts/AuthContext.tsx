@@ -47,7 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Csak egyszer fusson mount-kor
   useEffect(() => {
-    checkAuth();
+    // Ne ellenőrizzük auth-ot a login oldalon
+    if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+      setLoading(false);
+    } else {
+      checkAuth();
+    }
+
     // Regisztráljuk a callback-et
     setAuthCallback((authenticated) => {
       setIsAuthenticated(authenticated);
