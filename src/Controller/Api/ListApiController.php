@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use App\Entity\Item;
 use App\Entity\ListEntity;
+use App\Entity\ListGroup;
 use App\Entity\User;
 
 #[Route('/api', name: 'api_')]
@@ -28,6 +29,7 @@ class ListApiController extends AbstractController
             ->createQueryBuilder('l')
             ->join('l.users', 'u')
             ->andWhere('u = :user')
+            ->andWhere('l.listGroup IS NULL')
             ->setParameter('user', $user)
             ->getQuery()
             ->getResult();
@@ -37,6 +39,8 @@ class ListApiController extends AbstractController
             $data[] = [
                 'id' => $list->getId(),
                 'name' => $list->getName(),
+                'itemCount' => $list->getItems()->count(),
+                'completedCount' => $list->getItems()->filter(fn (Item $i) => $i->isChecked())->count(),
             ];
         }
 
@@ -56,7 +60,7 @@ class ListApiController extends AbstractController
             return $this->json(['error' => 'Not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if (!$list->getUsers()->contains($user)) {
+        if (!$this->userHasAccess($user, $list)) {
             return $this->json(['error' => 'Forbidden'], Response::HTTP_FORBIDDEN);
         }
 
@@ -103,12 +107,21 @@ class ListApiController extends AbstractController
         $list->setName($name);
         $list->addUser($user);
 
+        // Ha van listGroupId, hozzárendeljük
+        if (!empty($data['listGroupId'])) {
+            $group = $em->getRepository(ListGroup::class)->find($data['listGroupId']);
+            if ($group && $group->getUsers()->contains($user)) {
+                $list->setListGroup($group);
+            }
+        }
+
         $em->persist($list);
         $em->flush();
 
         return $this->json([
             'id' => $list->getId(),
             'name' => $list->getName(),
+            'listGroupId' => $list->getListGroup()?->getId(),
         ], 201);
     }
 
@@ -130,7 +143,7 @@ class ListApiController extends AbstractController
             return $this->json(['error' => 'List not found'], 404);
         }
 
-        if (!$list->getUsers()->contains($user)) {
+        if (!$this->userHasAccess($user, $list)) {
             return $this->json(['error' => 'Forbidden'], 403);
         }
 
@@ -170,7 +183,7 @@ class ListApiController extends AbstractController
             return $this->json(['error' => 'List not found'], 404);
         }
 
-        if (!$list->getUsers()->contains($user)) {
+        if (!$this->userHasAccess($user, $list)) {
             return $this->json(['error' => 'Forbidden'], 403);
         }
 
@@ -188,7 +201,7 @@ class ListApiController extends AbstractController
         $list = $em->getRepository(ListEntity::class)->find($id);
         if (!$list) return $this->json(['error' => 'List not found'], 404);
 
-        if (!$list->getUsers()->contains($user)) return $this->json(['error' => 'Forbidden'], 403);
+        if (!$this->userHasAccess($user, $list)) return $this->json(['error' => 'Forbidden'], 403);
 
         $users = [];
         foreach ($list->getUsers() as $u) {
@@ -205,7 +218,7 @@ class ListApiController extends AbstractController
         $list = $em->getRepository(ListEntity::class)->find($id);
         if (!$list) return $this->json(['error' => 'List not found'], 404);
 
-        if (!$list->getUsers()->contains($actor)) return $this->json(['error' => 'Forbidden'], 403);
+        if (!$this->userHasAccess($actor, $list)) return $this->json(['error' => 'Forbidden'], 403);
 
         $data = json_decode($request->getContent(), true) ?? [];
         $username = trim((string)($data['username'] ?? ''));
@@ -232,7 +245,7 @@ class ListApiController extends AbstractController
         $list = $em->getRepository(ListEntity::class)->find($id);
         if (!$list) return $this->json(['error' => 'List not found'], 404);
 
-        if (!$list->getUsers()->contains($actor)) return $this->json(['error' => 'Forbidden'], 403);
+        if (!$this->userHasAccess($actor, $list)) return $this->json(['error' => 'Forbidden'], 403);
 
         $target = $em->getRepository(User::class)->find($userId);
         if (!$target) return $this->json(['error' => 'User not found'], 404);
@@ -260,7 +273,7 @@ class ListApiController extends AbstractController
             return $this->json(['error' => 'Not found'], Response::HTTP_NOT_FOUND);
         }
 
-        if (!$list->getUsers()->contains($user)) {
+        if (!$this->userHasAccess($user, $list)) {
             return $this->json(['error' => 'Forbidden'], Response::HTTP_FORBIDDEN);
         }
 
@@ -306,7 +319,7 @@ class ListApiController extends AbstractController
         }
 
         $list = $item->getList();
-        if (!$list || !$list->getUsers()->contains($user)) {
+        if (!$list || !$this->userHasAccess($user, $list)) {
             return $this->json(['error' => 'Forbidden'], 403);
         }
 
@@ -350,7 +363,7 @@ class ListApiController extends AbstractController
         }
 
         $list = $item->getList();
-        if (!$list || !$list->getUsers()->contains($user)) {
+        if (!$list || !$this->userHasAccess($user, $list)) {
             return $this->json(['error' => 'Forbidden'], Response::HTTP_FORBIDDEN);
         }
 
@@ -358,5 +371,19 @@ class ListApiController extends AbstractController
         $em->flush();
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
+    }
+
+    private function userHasAccess(User $user, ListEntity $list): bool
+    {
+        if ($list->getUsers()->contains($user)) {
+            return true;
+        }
+
+        $group = $list->getListGroup();
+        if ($group && $group->getUsers()->contains($user)) {
+            return true;
+        }
+
+        return false;
     }
 }

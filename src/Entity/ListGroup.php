@@ -7,8 +7,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'list')]
-class ListEntity
+#[ORM\Table(name: 'list_group')]
+class ListGroup
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -19,20 +19,16 @@ class ListEntity
     private string $name;
 
     #[ORM\ManyToMany(targetEntity: User::class)]
-    #[ORM\JoinTable(name: 'list_user')]
+    #[ORM\JoinTable(name: 'list_group_user')]
     private Collection $users;
 
-    #[ORM\OneToMany(mappedBy: 'list', targetEntity: Item::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
-    private Collection $items;
-
-    #[ORM\ManyToOne(targetEntity: ListGroup::class, inversedBy: 'lists')]
-    #[ORM\JoinColumn(nullable: true)]
-    private ?ListGroup $listGroup = null;
+    #[ORM\OneToMany(mappedBy: 'listGroup', targetEntity: ListEntity::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $lists;
 
     public function __construct()
     {
         $this->users = new ArrayCollection();
-        $this->items = new ArrayCollection();
+        $this->lists = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -73,40 +69,28 @@ class ListEntity
         return $this;
     }
 
-    public function getItems(): Collection
+    public function getLists(): Collection
     {
-        return $this->items;
+        return $this->lists;
     }
 
-    public function addItem(Item $item): self
+    public function addList(ListEntity $list): self
     {
-        if (!$this->items->contains($item)) {
-            $this->items->add($item);
-            $item->setList($this);
+        if (!$this->lists->contains($list)) {
+            $this->lists->add($list);
+            $list->setListGroup($this);
         }
 
         return $this;
     }
 
-    public function removeItem(Item $item): self
+    public function removeList(ListEntity $list): self
     {
-        if ($this->items->removeElement($item)) {
-            if ($item->getList() === $this) {
-                $item->setList(null);
+        if ($this->lists->removeElement($list)) {
+            if ($list->getListGroup() === $this) {
+                $list->setListGroup(null);
             }
         }
-
-        return $this;
-    }
-
-    public function getListGroup(): ?ListGroup
-    {
-        return $this->listGroup;
-    }
-
-    public function setListGroup(?ListGroup $listGroup): self
-    {
-        $this->listGroup = $listGroup;
 
         return $this;
     }

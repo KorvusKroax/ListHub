@@ -222,16 +222,16 @@ export default function ListDetailPage() {
               <h1 className="text-3xl font-bold text-gray-100">{list.name}</h1>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setIsEditing(true)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                  Edit
-                </button>
-                <button
                   onClick={() => setShowShareModal(true)}
                   className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
                 >
                   Share
+                </button>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Edit
                 </button>
                 <button
                   onClick={handleDeleteList}
