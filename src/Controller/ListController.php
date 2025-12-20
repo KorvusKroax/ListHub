@@ -29,7 +29,7 @@ class ListController extends AbstractController
             ->getQuery()
             ->getResult();
 
-        return $this->render('shopping_list/index.html.twig', [
+        return $this->render('list/index.html.twig', [
             'lists' => $lists,
         ]);
     }
@@ -71,7 +71,7 @@ class ListController extends AbstractController
             }
         }
 
-        return $this->render('shopping_list/show.html.twig', [
+        return $this->render('list/show.html.twig', [
             'list' => $list,
         ]);
     }
