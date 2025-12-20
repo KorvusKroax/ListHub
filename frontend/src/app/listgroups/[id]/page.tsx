@@ -37,7 +37,7 @@ export default function ListGroupDetailPage() {
   };
   const router = useRouter();
   const params = useParams();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const groupId = params.id as string;
 
   useEffect(() => {
@@ -390,9 +390,16 @@ export default function ListGroupDetailPage() {
   return (
     <main className="min-h-screen bg-gray-900 text-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
-        <Link href="/" className="text-blue-500 hover:underline mb-4 inline-block">
-          ← Back to Home
-        </Link>
+        <div className="flex items-center justify-between mb-4">
+          <Link href="/" className="text-blue-500 hover:underline inline-block">
+            ← Back to Home
+          </Link>
+          {user && (
+            <div className="text-sm text-gray-400">
+              Signed in as <span className="text-gray-100 font-semibold">{user.username}</span>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-3 mb-6">
           <span className="text-4xl">📁</span>
@@ -421,7 +428,7 @@ export default function ListGroupDetailPage() {
             </form>
           ) : (
             <>
-              <h1 className="text-3xl font-bold text-gray-100">{group.name}</h1>
+              <h1 className="text-2xl font-semibold text-gray-100">{group.name}</h1>
               <div className="ml-auto flex gap-2">
                 <button
                   onClick={() => setShowShareModal(true)}
@@ -516,7 +523,7 @@ export default function ListGroupDetailPage() {
                         <div>
                           <h2 className="text-xl font-semibold text-gray-100">{list.name}</h2>
                           <span className="text-gray-400 text-sm">
-                            {(list.completedCount ?? 0)}/{list.itemCount ?? 0} items
+                            {(list.completedCount ?? 0)}/{list.itemCount ?? 0} items checked
                           </span>
                         </div>
                       </div>

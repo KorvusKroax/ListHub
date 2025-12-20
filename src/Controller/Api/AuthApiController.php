@@ -24,9 +24,31 @@ class AuthApiController extends AbstractController
         return $this->json([
             'message' => 'Login successful',
             'user' => [
+                'id' => $user->getId(),
+                'username' => $user->getUsername(),
                 'email' => $user->getEmail(),
                 'roles' => $user->getRoles(),
             ]
+        ]);
+    }
+
+    #[Route('/me', name: 'api_me', methods: ['GET'])]
+    public function me(): Response
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        return $this->json([
+            'user' => [
+                'id' => $user->getId(),
+                'username' => $user->getUsername(),
+                'email' => $user->getEmail(),
+                'roles' => $user->getRoles(),
+            ],
         ]);
     }
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
+import AppHeader from '@/components/AppHeader';
 
 export const metadata: Metadata = {
   title: 'Shopping List Frontend',
@@ -16,7 +17,10 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className="min-h-screen bg-gray-900 text-gray-100">
         <AuthProvider>
-          {children}
+          <div className="min-h-screen flex flex-col">
+            <AppHeader />
+            <div className="flex-1">{children}</div>
+          </div>
         </AuthProvider>
       </body>
     </html>

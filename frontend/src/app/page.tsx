@@ -16,7 +16,7 @@ export default function Home() {
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showListModal, setShowListModal] = useState(false);
   const router = useRouter();
-  const { isAuthenticated, loading, logout } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -103,72 +103,85 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-900 text-gray-100 p-8">
+    <main className="min-h-screen bg-gray-900 text-gray-100 p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-100">ListHub</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowGroupModal(true)}
-              className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 transition"
-            >
-              + New Group
-            </button>
-            <button
-              onClick={() => setShowListModal(true)}
-              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
-            >
-              + New List
-            </button>
-            <button
-              onClick={logout}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-
-        {/* Egységes kártya nézet: ListGroup-ok és Listák */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* ListGroup-ok */}
-          {listGroups.map((group) => (
-            <Link
-              key={`group-${group.id}`}
-              href={`/listgroups/${group.id}`}
-              className="bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border border-purple-700"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-purple-400">📁</span>
-                <h2 className="text-xl font-semibold text-gray-100">{group.name}</h2>
+        <div className="space-y-10">
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-semibold text-gray-100">Groups</h2>
+                <span className="text-sm text-gray-400">{listGroups.length} total</span>
               </div>
-              <p className="text-gray-400 text-sm">{group.listCount ?? 0} lists</p>
-            </Link>
-          ))}
+              <button
+                onClick={() => setShowGroupModal(true)}
+                className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 transition"
+              >
+                + New Group
+              </button>
+            </div>
 
-          {/* Standalone ListEntity-k */}
-          {standaloneLists.map((list) => (
-            <Link
-              key={`list-${list.id}`}
-              href={`/lists/${list.id}`}
-              className="bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border border-gray-700"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-blue-400">📝</span>
-                <h2 className="text-xl font-semibold text-gray-100">{list.name}</h2>
+            {listGroups.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {listGroups.map((group) => (
+                  <Link
+                    key={`group-${group.id}`}
+                    href={`/listgroups/${group.id}`}
+                    className="bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border border-purple-700"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-purple-400">📁</span>
+                      <h3 className="text-xl font-semibold text-gray-100">{group.name}</h3>
+                    </div>
+                    <p className="text-gray-400 text-sm">{group.listCount ?? 0} lists</p>
+                  </Link>
+                ))}
               </div>
-              <p className="text-gray-400 text-sm">
-                {(list.completedCount ?? 0)}/{list.itemCount ?? 0} items checked
-              </p>
-            </Link>
-          ))}
-        </div>
+            ) : (
+              <div className="text-gray-400 text-sm bg-gray-800 border border-gray-700 rounded-lg p-6 text-center">
+                No groups yet. Create one to get started.
+              </div>
+            )}
+          </section>
 
-        {listGroups.length === 0 && standaloneLists.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-400 text-lg">No groups or lists yet. Create one to get started!</p>
-          </div>
-        )}
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-semibold text-gray-100">Standalone Lists</h2>
+                <span className="text-sm text-gray-400">{standaloneLists.length} total</span>
+              </div>
+              <button
+                onClick={() => setShowListModal(true)}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+              >
+                + New List
+              </button>
+            </div>
+
+            {standaloneLists.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {standaloneLists.map((list) => (
+                  <Link
+                    key={`list-${list.id}`}
+                    href={`/lists/${list.id}`}
+                    className="bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border border-gray-700"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-blue-400">📝</span>
+                      <h3 className="text-xl font-semibold text-gray-100">{list.name}</h3>
+                    </div>
+                    <p className="text-gray-400 text-sm">
+                      {(list.completedCount ?? 0)}/{list.itemCount ?? 0} items checked
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-400 text-sm bg-gray-800 border border-gray-700 rounded-lg p-6 text-center">
+                No standalone lists yet. Create one to get started.
+              </div>
+            )}
+          </section>
+        </div>
 
         {/* New Group Modal */}
         {showGroupModal && (

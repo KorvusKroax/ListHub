@@ -3,11 +3,19 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { setAuthCallback, apiFetch } from '@/lib/api';
 
+type AuthUser = {
+  id?: number;
+  username: string;
+  email: string;
+  roles?: string[];
+};
+
 interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
+  user: AuthUser | null;
   checkAuth: () => Promise<void>;
-  setAuthenticated: (value: boolean) => void;
+  setAuthenticated: (value: boolean, user?: AuthUser | null) => void;
   logout: () => Promise<void>;
 }
 
@@ -16,20 +24,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   const checkAuth = useCallback(async () => {
     try {
-      const response = await apiFetch('http://localhost:8080/api/lists');
-      setIsAuthenticated(response.ok);
+      const response = await apiFetch('http://localhost:8080/api/me');
+      if (response.ok) {
+        const data = await response.json();
+        setIsAuthenticated(true);
+        setUser(data.user ?? null);
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
     } catch {
       setIsAuthenticated(false);
+      setUser(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const setAuthenticated = useCallback((value: boolean) => {
+  const setAuthenticated = useCallback((value: boolean, nextUser: AuthUser | null = null) => {
     setIsAuthenticated(value);
+    setUser(value ? nextUser : null);
     setLoading(false);
   }, []);
 
@@ -42,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Logout failed:', err);
     } finally {
       setIsAuthenticated(false);
+      setUser(null);
     }
   }, []);
 
@@ -57,12 +76,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Regisztráljuk a callback-et
     setAuthCallback((authenticated) => {
       setIsAuthenticated(authenticated);
+      if (!authenticated) {
+        setUser(null);
+      }
       setLoading(false);
     });
   }, []); // üres dependency array
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, loading, checkAuth, setAuthenticated, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, loading, user, checkAuth, setAuthenticated, logout }}>
       {children}
     </AuthContext.Provider>
   );
