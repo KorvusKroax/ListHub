@@ -16,6 +16,7 @@ export default function ListDetailPage() {
   const [addingItem, setAddingItem] = useState(false);
   const [shareUsername, setShareUsername] = useState('');
   const [sharedUsers, setSharedUsers] = useState<{id:number; username:string; email:string}[]>([]);
+  const [showShareModal, setShowShareModal] = useState(false);
   const router = useRouter();
   const params = useParams();
   const { isAuthenticated } = useAuth();
@@ -191,7 +192,7 @@ export default function ListDetailPage() {
           ← Back to Lists
         </Link>
 
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center justify-between gap-4 mb-6">
           {isEditing ? (
             <div className="flex gap-2 flex-1">
               <input
@@ -219,60 +220,89 @@ export default function ListDetailPage() {
           ) : (
             <>
               <h1 className="text-3xl font-bold text-gray-100">{list.name}</h1>
-              <button
-                onClick={() => setIsEditing(true)}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleDeleteList}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-              >
-                Delete
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+                >
+                  Share
+                </button>
+                <button
+                  onClick={handleDeleteList}
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              </div>
             </>
           )}
         </div>
 
-        <div className="bg-gray-800 rounded-lg shadow-md p-4 mb-6 border border-gray-700">
-          <form onSubmit={handleShare} className="flex gap-2 mb-4">
-            <input
-              type="text"
-              value={shareUsername}
-              onChange={(e) => setShareUsername(e.target.value)}
-              placeholder="Share with username..."
-              className="flex-1 px-3 py-2 border border-gray-700 rounded bg-gray-900 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="submit"
-              disabled={!shareUsername.trim()}
-              className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-gray-600 transition"
-            >
-              Share
-            </button>
-          </form>
+        {/* Share Modal */}
+        {showShareModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowShareModal(false)}>
+            <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-gray-700" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-100">Share List</h2>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="text-gray-400 hover:text-gray-200 text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
 
-          {sharedUsers.length === 0 ? (
-            <p className="text-gray-400 text-sm">No shared users yet.</p>
-          ) : (
-            <ul className="divide-y divide-gray-700">
-              {sharedUsers.map(u => (
-                <li key={u.id} className="py-2 flex items-center justify-between">
-                  <span className="text-gray-300">
-                    {u.username} <span className="text-gray-500 text-sm">({u.email})</span>
-                  </span>
+              <form onSubmit={handleShare} className="mb-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={shareUsername}
+                    onChange={(e) => setShareUsername(e.target.value)}
+                    placeholder="Username to share with..."
+                    className="flex-1 px-3 py-2 border border-gray-700 rounded bg-gray-900 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
                   <button
-                    onClick={() => handleUnshare(u.id)}
-                    className="text-red-500 hover:text-red-700 px-3 py-1 rounded transition"
+                    type="submit"
+                    disabled={!shareUsername.trim()}
+                    className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-gray-600 transition"
                   >
-                    Remove
+                    Add
                   </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                </div>
+              </form>
+
+              <div className="border-t border-gray-700 pt-4">
+                <h3 className="text-sm font-semibold text-gray-400 mb-2">Shared with:</h3>
+                {sharedUsers.length === 0 ? (
+                  <p className="text-gray-400 text-sm">No one yet.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {sharedUsers.map(u => (
+                      <li key={u.id} className="flex items-center justify-between bg-gray-900 p-3 rounded">
+                        <div>
+                          <p className="text-gray-200 font-medium">{u.username}</p>
+                          <p className="text-gray-500 text-sm">{u.email}</p>
+                        </div>
+                        <button
+                          onClick={() => handleUnshare(u.id)}
+                          className="text-red-500 hover:text-red-400 px-3 py-1 rounded transition text-sm"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleAddItem} className="bg-gray-800 rounded-lg shadow-md p-4 mb-6 border border-gray-700">
           <div className="flex gap-2">
