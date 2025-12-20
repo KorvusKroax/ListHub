@@ -92,7 +92,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex items-center justify-center">
         <p className="text-xl">Loading...</p>
       </div>
     );
@@ -103,14 +103,13 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-900 text-gray-100 p-6">
+    <main className="bg-gray-900 text-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="space-y-10">
           <section className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-semibold text-gray-100">Groups</h2>
-                <span className="text-sm text-gray-400">{listGroups.length} total</span>
               </div>
               <button
                 onClick={() => setShowGroupModal(true)}
@@ -147,7 +146,6 @@ export default function Home() {
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-semibold text-gray-100">Standalone Lists</h2>
-                <span className="text-sm text-gray-400">{standaloneLists.length} total</span>
               </div>
               <button
                 onClick={() => setShowListModal(true)}

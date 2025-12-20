@@ -16,10 +16,10 @@ export default function AppHeader() {
 
   return (
     <header className="bg-gray-950 border-b border-gray-800">
-      <div className="max-w-6xl mx-auto px-3 py-3 flex items-center gap-4">
+      <div className="max-w-7xl mx-auto px-3 py-3 flex items-center gap-4">
         <Link href="/" className="flex items-center gap-3 text-gray-100 hover:text-white">
           <Image src="/icon.svg" alt="ListHub" width={32} height={32} className="rounded-md" />
-          <span className="text-2xl md:text-3xl font-bold">ListHub</span>
+          <span className="text-3xl font-bold">ListHub</span>
         </Link>
 
         <div className="flex-1" />

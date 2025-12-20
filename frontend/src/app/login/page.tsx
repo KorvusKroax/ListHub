@@ -42,10 +42,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-900 p-4 sm:p-6">
+    <div className="flex items-center justify-center bg-gray-900 p-4 sm:p-6">
       <div className="w-full max-w-md mx-auto">
         <div className="text-center mb-6">
-          <span className="text-4xl md:text-5xl font-bold text-white">ListHub</span>
+          <span className="text-5xl font-bold text-white">ListHub</span>
         </div>
         <div className="bg-gray-800 rounded-lg shadow-md p-8 border border-gray-700">
           <h1 className="text-2xl font-bold text-center mb-6 text-gray-100">Login</h1>

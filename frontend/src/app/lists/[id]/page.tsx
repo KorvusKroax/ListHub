@@ -175,7 +175,7 @@ export default function ListDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex items-center justify-center">
         <p className="text-xl">Loading...</p>
       </div>
     );
@@ -186,7 +186,7 @@ export default function ListDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-900 text-gray-100 p-8">
+    <main className="bg-gray-900 text-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
         <Link href="/" className="text-blue-500 hover:underline mb-4 inline-block">
           ← Back to Lists
@@ -219,7 +219,7 @@ export default function ListDetailPage() {
             </div>
           ) : (
             <>
-              <h1 className="text-3xl font-bold text-gray-100">{list.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-100">{list.name}</h1>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowShareModal(true)}

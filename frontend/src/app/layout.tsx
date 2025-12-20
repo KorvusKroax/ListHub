@@ -15,9 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-gray-900 text-gray-100">
+      <body className="bg-gray-900 text-gray-100">
         <AuthProvider>
-          <div className="min-h-screen flex flex-col">
+          <div className="flex flex-col">
             <AppHeader />
             <div className="flex-1">{children}</div>
           </div>
