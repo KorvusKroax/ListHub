@@ -15,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="bg-gray-900 text-gray-100">
+      <body className="bg-gray-950 text-gray-100">
         <AuthProvider>
           <div className="flex flex-col">
             <AppHeader />

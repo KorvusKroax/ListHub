@@ -42,7 +42,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center bg-gray-900 p-4 sm:p-6">
+    <div className="flex items-center justify-center bg-gray-950 p-4 sm:p-6">
       <div className="w-full max-w-md mx-auto">
         <div className="text-center mb-6">
           <span className="text-5xl font-bold text-white">ListHub</span>
@@ -51,7 +51,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-center mb-6 text-gray-100">Login</h1>
 
           {error && (
-            <div className="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded mb-4">
+            <div className="bg-red-950 border border-red-700 text-red-200 px-4 py-3 rounded mb-4">
               {error}
             </div>
           )}
@@ -66,7 +66,7 @@ export default function LoginPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-700 rounded bg-gray-900 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-700 rounded bg-gray-900 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 required
                 disabled={loading}
               />
@@ -81,7 +81,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-700 rounded bg-gray-900 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-700 rounded bg-gray-900 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 required
                 disabled={loading}
               />
@@ -90,7 +90,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed"
+              className="w-full bg-gray-600 text-white py-2 px-4 rounded hover:bg-gray-700 disabled:bg-gray-700 disabled:cursor-not-allowed"
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>

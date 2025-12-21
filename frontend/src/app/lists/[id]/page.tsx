@@ -186,9 +186,9 @@ export default function ListDetailPage() {
   }
 
   return (
-    <main className="bg-gray-900 text-gray-100 p-8">
+    <main className="bg-gray-950 text-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
-        <Link href="/" className="text-blue-500 hover:underline mb-4 inline-block">
+        <Link href="/" className="text-blue-400 hover:underline mb-4 inline-block">
           ← Back to Lists
         </Link>
 
@@ -203,7 +203,7 @@ export default function ListDetailPage() {
               />
               <button
                 onClick={handleUpdateList}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
               >
                 Save
               </button>
@@ -223,19 +223,19 @@ export default function ListDetailPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowShareModal(true)}
-                  className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
                 >
                   Share
                 </button>
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
                 >
                   Edit
                 </button>
                 <button
                   onClick={handleDeleteList}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
                 >
                   Delete
                 </button>
@@ -265,12 +265,12 @@ export default function ListDetailPage() {
                     value={shareUsername}
                     onChange={(e) => setShareUsername(e.target.value)}
                     placeholder="Username to share with..."
-                    className="flex-1 px-3 py-2 border border-gray-700 rounded bg-gray-900 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="flex-1 px-3 py-2 border border-gray-700 rounded bg-gray-900 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
                   />
                   <button
                     type="submit"
                     disabled={!shareUsername.trim()}
-                    className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-gray-600 transition"
+                    className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 disabled:bg-gray-700 transition"
                   >
                     Add
                   </button>
@@ -291,7 +291,7 @@ export default function ListDetailPage() {
                         </div>
                         <button
                           onClick={() => handleUnshare(u.id)}
-                          className="text-red-500 hover:text-red-400 px-3 py-1 rounded transition text-sm"
+                          className="text-red-400 hover:text-red-300 px-3 py-1 rounded transition text-sm"
                         >
                           Remove
                         </button>

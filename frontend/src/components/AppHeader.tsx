@@ -37,7 +37,7 @@ export default function AppHeader() {
 
           <button
             onClick={logout}
-            className="bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 transition text-sm"
+            className="bg-red-600 text-white px-3 py-1.5 rounded hover:bg-red-700 transition text-sm"
           >
             Logout
           </button>

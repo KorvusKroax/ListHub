@@ -103,7 +103,7 @@ export default function Home() {
   }
 
   return (
-    <main className="bg-gray-900 text-gray-100 p-8">
+    <main className="bg-gray-950 text-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="space-y-10">
           <section className="space-y-4">
@@ -113,7 +113,7 @@ export default function Home() {
               </div>
               <button
                 onClick={() => setShowGroupModal(true)}
-                className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 transition"
+                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition"
               >
                 + New Group
               </button>
@@ -125,10 +125,10 @@ export default function Home() {
                   <Link
                     key={`group-${group.id}`}
                     href={`/listgroups/${group.id}`}
-                    className="bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border border-purple-700"
+                    className="bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border border-gray-700"
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-purple-400">📁</span>
+                      <span className="text-gray-400">📁</span>
                       <h3 className="text-xl font-semibold text-gray-100">{group.name}</h3>
                     </div>
                     <p className="text-gray-400 text-sm">{group.listCount ?? 0} lists</p>
@@ -149,7 +149,7 @@ export default function Home() {
               </div>
               <button
                 onClick={() => setShowListModal(true)}
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
+                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition"
               >
                 + New List
               </button>
@@ -164,7 +164,7 @@ export default function Home() {
                     className="bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border border-gray-700"
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-blue-400">📝</span>
+                      <span className="text-gray-400">📝</span>
                       <h3 className="text-xl font-semibold text-gray-100">{list.name}</h3>
                     </div>
                     <p className="text-gray-400 text-sm">
@@ -215,7 +215,7 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={!newGroupName.trim()}
-                    className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-gray-600 transition"
+                    className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 disabled:bg-gray-700 transition"
                   >
                     Create
                   </button>
@@ -276,7 +276,7 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={!newListName.trim()}
-                    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:bg-gray-600 transition"
+                    className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 disabled:bg-gray-700 transition"
                   >
                     Create
                   </button>

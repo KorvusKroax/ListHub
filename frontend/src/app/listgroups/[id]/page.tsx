@@ -388,9 +388,9 @@ export default function ListGroupDetailPage() {
   }
 
   return (
-    <main className="bg-gray-900 text-gray-100 p-8">
+    <main className="bg-gray-950 text-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
-        <Link href="/" className="text-blue-500 hover:underline mb-4 inline-block">
+        <Link href="/" className="text-gray-400 hover:text-gray-300 mb-4 inline-block">
           ← Back to Home
         </Link>
 
@@ -407,7 +407,7 @@ export default function ListGroupDetailPage() {
               />
               <button
                 type="submit"
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
               >
                 Save
               </button>
@@ -425,19 +425,19 @@ export default function ListGroupDetailPage() {
               <div className="ml-auto flex gap-2">
                 <button
                   onClick={() => setShowShareModal(true)}
-                  className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
                 >
                   Share
                 </button>
                 <button
                   onClick={startEdit}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
                 >
                   Edit
                 </button>
                 <button
                   onClick={handleDeleteGroup}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
                 >
                   Delete
                 </button>
@@ -459,7 +459,7 @@ export default function ListGroupDetailPage() {
             <button
               type="submit"
               disabled={!newListName.trim()}
-              className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-gray-600 transition"
+              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 disabled:bg-gray-700 transition"
             >
               Add List
             </button>
@@ -484,13 +484,13 @@ export default function ListGroupDetailPage() {
                           type="text"
                           value={editedListName}
                           onChange={(e) => setEditedListName(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-600 rounded bg-gray-900 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 px-3 py-2 border border-gray-600 rounded bg-gray-900 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500"
                           autoFocus
                           onClick={(e) => e.stopPropagation()}
                         />
                         <button
                           type="submit"
-                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                          className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
                         >
                           Save
                         </button>
@@ -526,7 +526,7 @@ export default function ListGroupDetailPage() {
                             e.stopPropagation();
                             startEditList(list);
                           }}
-                          className="text-yellow-500 hover:text-yellow-400 px-3 py-1"
+                          className="text-gray-400 hover:text-gray-300 px-3 py-1"
                         >
                           Edit
                         </button>
@@ -535,7 +535,7 @@ export default function ListGroupDetailPage() {
                             e.stopPropagation();
                             handleDeleteList(list.id);
                           }}
-                          className="text-red-500 hover:text-red-400 px-3 py-1"
+                          className="text-red-400 hover:text-red-300 px-3 py-1"
                         >
                           Delete
                         </button>
@@ -558,12 +558,12 @@ export default function ListGroupDetailPage() {
                               setNewItemName(e.target.value);
                             }}
                             placeholder="Add item..."
-                            className="flex-1 px-3 py-2 border border-gray-600 rounded bg-gray-900 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 px-3 py-2 border border-gray-600 rounded bg-gray-900 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
                           />
                           <button
                             type="submit"
                             disabled={activeListId !== list.id || !newItemName.trim()}
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-600 transition"
+                            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 disabled:bg-gray-700 transition"
                           >
                             Add
                           </button>
@@ -583,12 +583,12 @@ export default function ListGroupDetailPage() {
                                     type="text"
                                     value={editedItemName}
                                     onChange={(e) => setEditedItemName(e.target.value)}
-                                    className="flex-1 px-3 py-2 border border-gray-600 rounded bg-gray-800 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="flex-1 px-3 py-2 border border-gray-600 rounded bg-gray-800 text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500"
                                     autoFocus
                                   />
                                   <button
                                     type="submit"
-                                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                                    className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
                                   >
                                     Save
                                   </button>
