@@ -11,7 +11,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use App\Entity\Item;
 use App\Entity\ListEntity;
-use App\Entity\ListGroup;
 use App\Entity\User;
 
 #[Route('/api', name: 'api_')]
@@ -29,7 +28,6 @@ class ListApiController extends AbstractController
             ->createQueryBuilder('l')
             ->join('l.users', 'u')
             ->andWhere('u = :user')
-            ->andWhere('l.listGroup IS NULL')
             ->setParameter('user', $user)
             ->getQuery()
             ->getResult();
@@ -107,21 +105,12 @@ class ListApiController extends AbstractController
         $list->setName($name);
         $list->addUser($user);
 
-        // Ha van listGroupId, hozzárendeljük
-        if (!empty($data['listGroupId'])) {
-            $group = $em->getRepository(ListGroup::class)->find($data['listGroupId']);
-            if ($group && $group->getUsers()->contains($user)) {
-                $list->setListGroup($group);
-            }
-        }
-
         $em->persist($list);
         $em->flush();
 
         return $this->json([
             'id' => $list->getId(),
             'name' => $list->getName(),
-            'listGroupId' => $list->getListGroup()?->getId(),
         ], 201);
     }
 
@@ -375,15 +364,6 @@ class ListApiController extends AbstractController
 
     private function userHasAccess(User $user, ListEntity $list): bool
     {
-        if ($list->getUsers()->contains($user)) {
-            return true;
-        }
-
-        $group = $list->getListGroup();
-        if ($group && $group->getUsers()->contains($user)) {
-            return true;
-        }
-
-        return false;
+        return $list->getUsers()->contains($user);
     }
 }

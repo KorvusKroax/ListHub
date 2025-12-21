@@ -25,10 +25,6 @@ class ListEntity
     #[ORM\OneToMany(mappedBy: 'list', targetEntity: Item::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $items;
 
-    #[ORM\ManyToOne(targetEntity: ListGroup::class, inversedBy: 'lists')]
-    #[ORM\JoinColumn(nullable: true)]
-    private ?ListGroup $listGroup = null;
-
     public function __construct()
     {
         $this->users = new ArrayCollection();
@@ -95,18 +91,6 @@ class ListEntity
                 $item->setList(null);
             }
         }
-
-        return $this;
-    }
-
-    public function getListGroup(): ?ListGroup
-    {
-        return $this->listGroup;
-    }
-
-    public function setListGroup(?ListGroup $listGroup): self
-    {
-        $this->listGroup = $listGroup;
 
         return $this;
     }
