@@ -1,8 +1,10 @@
 export interface ListEntity {
   id: number;
   name: string;
+  parentId?: number;
   itemCount?: number;
   completedCount?: number;
+  childCount?: number;
 }
 
 export interface Item {
@@ -13,4 +15,5 @@ export interface Item {
 
 export interface ListDetail extends ListEntity {
   items: Item[];
+  children?: ListEntity[];
 }

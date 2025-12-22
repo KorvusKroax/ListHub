@@ -60,7 +60,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center py-4">
         <p className="text-xl">Loading...</p>
       </div>
     );
@@ -72,7 +72,7 @@ export default function Home() {
 
   return (
     <main className="bg-gray-950 text-gray-100 p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="space-y-10">
           <section className="space-y-4">
             <div className="flex items-center justify-between gap-3">

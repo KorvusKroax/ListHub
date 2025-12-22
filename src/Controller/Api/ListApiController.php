@@ -28,6 +28,7 @@ class ListApiController extends AbstractController
             ->createQueryBuilder('l')
             ->join('l.users', 'u')
             ->andWhere('u = :user')
+            ->andWhere('l.parent IS NULL')
             ->setParameter('user', $user)
             ->getQuery()
             ->getResult();
@@ -37,8 +38,10 @@ class ListApiController extends AbstractController
             $data[] = [
                 'id' => $list->getId(),
                 'name' => $list->getName(),
+                'parentId' => $list->getParent()?->getId(),
                 'itemCount' => $list->getItems()->count(),
                 'completedCount' => $list->getItems()->filter(fn (Item $i) => $i->isChecked())->count(),
+                'childCount' => $list->getChildren()->count(),
             ];
         }
 
@@ -71,10 +74,22 @@ class ListApiController extends AbstractController
             ];
         }
 
+        $childrenData = [];
+        foreach ($list->getChildren() as $child) {
+            $childrenData[] = [
+                'id' => $child->getId(),
+                'name' => $child->getName(),
+                'itemCount' => $child->getItems()->count(),
+                'completedCount' => $child->getItems()->filter(fn (Item $i) => $i->isChecked())->count(),
+            ];
+        }
+
         $data = [
             'id' => $list->getId(),
             'name' => $list->getName(),
+            'parentId' => $list->getParent()?->getId(),
             'items' => $itemsData,
+            'children' => $childrenData,
         ];
 
         return $this->json($data);
@@ -105,12 +120,21 @@ class ListApiController extends AbstractController
         $list->setName($name);
         $list->addUser($user);
 
+        // Ha van parentId, hozzárendeljük
+        if (!empty($data['parentId'])) {
+            $parent = $em->getRepository(ListEntity::class)->find($data['parentId']);
+            if ($parent && $this->userHasAccess($user, $parent)) {
+                $list->setParent($parent);
+            }
+        }
+
         $em->persist($list);
         $em->flush();
 
         return $this->json([
             'id' => $list->getId(),
             'name' => $list->getName(),
+            'parentId' => $list->getParent()?->getId(),
         ], 201);
     }
 
