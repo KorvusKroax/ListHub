@@ -23,6 +23,7 @@ class ListEntity
     private Collection $users;
 
     #[ORM\OneToMany(mappedBy: 'list', targetEntity: Item::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC', 'id' => 'ASC'])]
     private Collection $items;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'children')]
@@ -30,7 +31,11 @@ class ListEntity
     private ?self $parent = null;
 
     #[ORM\OneToMany(mappedBy: 'parent', targetEntity: self::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC', 'id' => 'ASC'])]
     private Collection $children;
+
+    #[ORM\Column(type: 'integer')]
+    private int $position = 0;
 
     public function __construct()
     {
@@ -137,6 +142,18 @@ class ListEntity
                 $child->setParent(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getPosition(): int
+    {
+        return $this->position;
+    }
+
+    public function setPosition(int $position): self
+    {
+        $this->position = $position;
 
         return $this;
     }

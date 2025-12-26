@@ -19,6 +19,9 @@ class Item
     #[ORM\Column(type: 'boolean')]
     private bool $isChecked = false;
 
+    #[ORM\Column(type: 'integer')]
+    private int $position = 0;
+
     #[ORM\ManyToOne(targetEntity: ListEntity::class, inversedBy: 'items')]
     #[ORM\JoinColumn(nullable: false)]
     private ?ListEntity $list = null;
@@ -48,6 +51,18 @@ class Item
     public function setIsChecked(bool $isChecked): self
     {
         $this->isChecked = $isChecked;
+
+        return $this;
+    }
+
+    public function getPosition(): int
+    {
+        return $this->position;
+    }
+
+    public function setPosition(int $position): self
+    {
+        $this->position = $position;
 
         return $this;
     }

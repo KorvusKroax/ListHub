@@ -29,6 +29,8 @@ class ListApiController extends AbstractController
             ->join('l.users', 'u')
             ->andWhere('u = :user')
             ->andWhere('l.parent IS NULL')
+            ->orderBy('l.position', 'ASC')
+            ->addOrderBy('l.id', 'ASC')
             ->setParameter('user', $user)
             ->getQuery()
             ->getResult();
@@ -125,7 +127,22 @@ class ListApiController extends AbstractController
             $parent = $em->getRepository(ListEntity::class)->find($data['parentId']);
             if ($parent && $this->userHasAccess($user, $parent)) {
                 $list->setParent($parent);
+                $list->setPosition($parent->getChildren()->count());
             }
+        }
+
+        // Ha nincs parent, a gyökérben a felhasználó következő pozícióját kapja
+        if ($list->getParent() === null) {
+            $qb = $em->getRepository(ListEntity::class)->createQueryBuilder('l');
+            $count = (int) $qb
+                ->select('COUNT(l.id)')
+                ->join('l.users', 'u')
+                ->andWhere('u = :user')
+                ->andWhere('l.parent IS NULL')
+                ->setParameter('user', $user)
+                ->getQuery()
+                ->getSingleScalarResult();
+            $list->setPosition($count);
         }
 
         $em->persist($list);
@@ -300,6 +317,7 @@ class ListApiController extends AbstractController
         $item = new Item();
         $item->setName($name);
         $item->setIsChecked(false);
+        $item->setPosition($list->getItems()->count());
         $item->setList($list);
 
         $em->persist($item);
@@ -384,6 +402,275 @@ class ListApiController extends AbstractController
         $em->flush();
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/items/{id}/move', name: 'api_item_move', methods: ['PUT'], requirements: ['id' => '\\d+'])]
+    public function moveItem(
+        int $id,
+        Request $request,
+        EntityManagerInterface $em,
+        Security $security
+    ): JsonResponse {
+        /** @var User|null $user */
+        $user = $security->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        /** @var Item|null $item */
+        $item = $em->getRepository(Item::class)->find($id);
+        if (!$item) {
+            return $this->json(['error' => 'Item not found'], 404);
+        }
+
+        $currentList = $item->getList();
+        if (!$currentList || !$this->userHasAccess($user, $currentList)) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+        $data = json_decode($request->getContent(), true) ?? [];
+        $targetListId = $data['listId'] ?? null;
+        if (!$targetListId) {
+            return $this->json(['error' => 'listId is required'], 400);
+        }
+
+        /** @var ListEntity|null $targetList */
+        $targetList = $em->getRepository(ListEntity::class)->find($targetListId);
+        if (!$targetList) {
+            return $this->json(['error' => 'Target list not found'], 404);
+        }
+
+        if (!$this->userHasAccess($user, $targetList)) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+        if ($targetList->getId() === $currentList->getId()) {
+            return $this->json([
+                'id' => $item->getId(),
+                'name' => $item->getName(),
+                'isChecked' => $item->isChecked(),
+                'listId' => $currentList->getId(),
+            ]);
+        }
+
+        $item->setList($targetList);
+        $item->setPosition($targetList->getItems()->count());
+        $em->flush();
+
+        return $this->json([
+            'id' => $item->getId(),
+            'name' => $item->getName(),
+            'isChecked' => $item->isChecked(),
+            'listId' => $targetList->getId(),
+        ]);
+    }
+
+    #[Route('/lists/{id}/items/reorder', name: 'api_list_items_reorder', methods: ['PUT'], requirements: ['id' => '\d+'])]
+    public function reorderItems(
+        int $id,
+        Request $request,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        /** @var ListEntity|null $list */
+        $list = $em->getRepository(ListEntity::class)->find($id);
+        if (!$list) {
+            return $this->json(['error' => 'List not found'], 404);
+        }
+
+        if (!$this->userHasAccess($user, $list)) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+        $data = json_decode($request->getContent(), true) ?? [];
+        $orderedIds = $data['itemIds'] ?? $data['ids'] ?? null;
+        if (!is_array($orderedIds) || count($orderedIds) === 0) {
+            return $this->json(['error' => 'itemIds array is required'], 400);
+        }
+
+        $orderedIds = array_values(array_map('intval', $orderedIds));
+        if (count($orderedIds) !== count(array_unique($orderedIds))) {
+            return $this->json(['error' => 'Duplicate ids are not allowed'], 400);
+        }
+
+        $totalInList = $list->getItems()->count();
+        if ($totalInList !== count($orderedIds)) {
+            return $this->json(['error' => 'All items must be included'], 400);
+        }
+
+        $items = $em->getRepository(Item::class)
+            ->createQueryBuilder('i')
+            ->where('i.list = :list')
+            ->andWhere('i.id IN (:ids)')
+            ->setParameter('list', $list)
+            ->setParameter('ids', $orderedIds)
+            ->getQuery()
+            ->getResult();
+
+        if (count($items) !== count($orderedIds)) {
+            return $this->json(['error' => 'Invalid itemIds for this list'], 400);
+        }
+
+        $itemsById = [];
+        foreach ($items as $item) {
+            $itemsById[$item->getId()] = $item;
+        }
+
+        foreach ($orderedIds as $position => $itemId) {
+            $itemsById[$itemId]->setPosition($position);
+        }
+
+        $em->flush();
+
+        return $this->json(['message' => 'Reordered']);
+    }
+
+    #[Route('/lists/{id}/move', name: 'api_list_move', methods: ['PUT'], requirements: ['id' => '\\d+'])]
+    public function moveList(
+        int $id,
+        Request $request,
+        EntityManagerInterface $em,
+        Security $security
+    ): JsonResponse {
+        /** @var User|null $user */
+        $user = $security->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        /** @var ListEntity|null $list */
+        $list = $em->getRepository(ListEntity::class)->find($id);
+        if (!$list) {
+            return $this->json(['error' => 'List not found'], 404);
+        }
+
+        if (!$this->userHasAccess($user, $list)) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+        $data = json_decode($request->getContent(), true) ?? [];
+        $parentId = $data['parentId'] ?? null;
+
+        $newParent = null;
+        if ($parentId !== null) {
+            /** @var ListEntity|null $candidate */
+            $candidate = $em->getRepository(ListEntity::class)->find($parentId);
+            if (!$candidate) {
+                return $this->json(['error' => 'Target parent not found'], 404);
+            }
+            if (!$this->userHasAccess($user, $candidate)) {
+                return $this->json(['error' => 'Forbidden'], 403);
+            }
+            if ($candidate->getId() === $list->getId() || $this->isDescendantOf($candidate, $list)) {
+                return $this->json(['error' => 'Cannot move list under itself or its descendant'], 400);
+            }
+            $newParent = $candidate;
+        }
+
+        $list->setParent($newParent);
+        if ($newParent) {
+            $list->setPosition($newParent->getChildren()->count());
+        } else {
+            $qb = $em->getRepository(ListEntity::class)->createQueryBuilder('l');
+            $count = (int) $qb
+                ->select('COUNT(l.id)')
+                ->join('l.users', 'u')
+                ->andWhere('u = :user')
+                ->andWhere('l.parent IS NULL')
+                ->setParameter('user', $user)
+                ->getQuery()
+                ->getSingleScalarResult();
+            $list->setPosition($count);
+        }
+        $em->flush();
+
+        return $this->json([
+            'id' => $list->getId(),
+            'name' => $list->getName(),
+            'parentId' => $list->getParent() ? $list->getParent()->getId() : null,
+        ]);
+    }
+
+    #[Route('/lists/{id}/children/reorder', name: 'api_list_children_reorder', methods: ['PUT'], requirements: ['id' => '\d+'])]
+    public function reorderChildren(
+        int $id,
+        Request $request,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], 401);
+        }
+
+        /** @var ListEntity|null $parent */
+        $parent = $em->getRepository(ListEntity::class)->find($id);
+        if (!$parent) {
+            return $this->json(['error' => 'List not found'], 404);
+        }
+
+        if (!$this->userHasAccess($user, $parent)) {
+            return $this->json(['error' => 'Forbidden'], 403);
+        }
+
+        $data = json_decode($request->getContent(), true) ?? [];
+        $orderedIds = $data['listIds'] ?? $data['ids'] ?? null;
+        if (!is_array($orderedIds) || count($orderedIds) === 0) {
+            return $this->json(['error' => 'listIds array is required'], 400);
+        }
+
+        $orderedIds = array_values(array_map('intval', $orderedIds));
+        if (count($orderedIds) !== count(array_unique($orderedIds))) {
+            return $this->json(['error' => 'Duplicate ids are not allowed'], 400);
+        }
+
+        $totalChildren = $parent->getChildren()->count();
+        if ($totalChildren !== count($orderedIds)) {
+            return $this->json(['error' => 'All child lists must be included'], 400);
+        }
+
+        $children = $em->getRepository(ListEntity::class)
+            ->createQueryBuilder('l')
+            ->where('l.parent = :parent')
+            ->andWhere('l.id IN (:ids)')
+            ->setParameter('parent', $parent)
+            ->setParameter('ids', $orderedIds)
+            ->getQuery()
+            ->getResult();
+
+        if (count($children) !== count($orderedIds)) {
+            return $this->json(['error' => 'Invalid listIds for this parent'], 400);
+        }
+
+        $childrenById = [];
+        foreach ($children as $child) {
+            $childrenById[$child->getId()] = $child;
+        }
+
+        foreach ($orderedIds as $position => $listId) {
+            $childrenById[$listId]->setPosition($position);
+        }
+
+        $em->flush();
+
+        return $this->json(['message' => 'Reordered']);
+    }
+
+    private function isDescendantOf(?ListEntity $candidateParent, ListEntity $child): bool
+    {
+        $cursor = $candidateParent;
+        while ($cursor !== null) {
+            if ($cursor->getId() === $child->getId()) {
+                return true;
+            }
+            $cursor = $cursor->getParent();
+        }
+        return false;
     }
 
     private function userHasAccess(User $user, ListEntity $list): bool

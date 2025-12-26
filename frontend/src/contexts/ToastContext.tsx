@@ -61,7 +61,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={t.id}
             className={
-              'min-w-[240px] max-w-[420px] px-4 py-3 shadow-lg border pointer-events-auto ' +
+              'min-w-[240px] max-w-[420px] px-4 py-3 shadow-lg pointer-events-auto ' +
               (t.type === 'success'
                 ? 'bg-green-500 text-white'
                 : t.type === 'error'
