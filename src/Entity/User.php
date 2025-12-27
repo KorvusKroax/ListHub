@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'user')]
@@ -18,7 +19,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 128, unique: true)]
     private string $username;
 
-    #[ORM\Column(length: 180, unique: true)]
+    #[ORM\Column(length: 256, unique: true)]
     private string $email;
 
     #[ORM\Column(type: 'json')]
@@ -26,6 +27,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     private string $password;
+
+    #[ORM\OneToMany(mappedBy: 'owner', targetEntity: ListNode::class)]
+    private Collection $ownedRootLists;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: ListShare::class)]
+    private Collection $sharedLists;
 
     public function getId(): ?int
     {

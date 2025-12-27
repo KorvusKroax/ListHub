@@ -1,0 +1,104 @@
+#############################################
+# ListNode API Tests - VS Code REST Client
+#############################################
+
+@baseUrl = http://127.0.0.1:8080
+@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NjY4NDE2ODcsImV4cCI6MTc2Njg0NTI4Nywicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoiYWRtaW4ifQ.mvA39O2FN1DV7GKMIXiYMT_5CgNxVyjtL6yyusm8zx9fouECtmkMMaZVukboF-etJCLP5EoLq_LEepm3cZ-h8ATQ5AalR8EBEmqi5vS4-eUY3a6-jft1cajXlT-k7fpK9w7lJJeqYCZl2kRpRZuT5HOdsoQMiXKMjvtzExLUxgB0jkjZRM5GAPGeULtCPSigLGX3_JytMqjz_rse6ab0cPnreAMCa_6TfaL8X-_1xCJdsbusPo8MK4V263Ir2M_IykjqvafiVl3w-6DtWOn_fjWqCyWz3gJaWhgFLglJN2q0-TNNaUZ2kLPj8w6BVbewNtZbOayLgGTDoCVYEBeS9w
+
+###
+
+# 0. Create token -> for @token
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "password": "password123"
+}
+
+###
+
+# 1. Create root sublist
+POST {{baseUrl}}/api/listnodes
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "type": "sublist"
+}
+
+###
+
+# 2. Create item under root list (replace ROOT_ID with actual ID from previous response)
+POST {{baseUrl}}/api/listnodes
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "type": "item",
+    "parentId": ROOT_ID,
+    "name": "Test Item 1",
+    "isChecked": false
+}
+
+###
+
+# 3. Get all root lists
+GET {{baseUrl}}/api/listnodes
+Authorization: Bearer {{token}}
+
+###
+
+# 4. Get children of a root list (replace ROOT_ID)
+GET {{baseUrl}}/api/listnodes/ROOT_ID/children
+Authorization: Bearer {{token}}
+
+###
+
+# 5. Update an item (replace ITEM_ID)
+PATCH {{baseUrl}}/api/listnodes/ITEM_ID
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "name": "Updated Item Name",
+    "isChecked": true
+}
+
+###
+
+# 6. Delete a node (replace NODE_ID)
+DELETE {{baseUrl}}/api/listnodes/NODE_ID
+Authorization: Bearer {{token}}
+
+###
+
+# 7. Share a root list with another user (replace ROOT_ID and TARGET_USER_ID)
+POST {{baseUrl}}/api/listnodes/ROOT_ID/share
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "userId": TARGET_USER_ID,
+    "permission": "write"
+}
+
+###
+
+# 8. Attempt to create item under a shared root (replace ROOT_ID)
+POST {{baseUrl}}/api/listnodes
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "type": "item",
+    "parentId": ROOT_ID,
+    "name": "Shared User Item",
+    "isChecked": false
+}
+
+###
+
+# 9. Read a single node (replace NODE_ID)
+GET {{baseUrl}}/api/listnodes/NODE_ID
+Authorization: Bearer {{token}}

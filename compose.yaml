@@ -19,17 +19,6 @@ services:
     depends_on:
       - php
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-    depends_on:
-      - php
-
   database:
     image: mysql:8.0
     environment:
