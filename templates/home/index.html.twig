@@ -3,15 +3,12 @@
 {% block body %}
     <h1>ListHub API</h1>
     <div style="white-space:pre">
-        <code>GET /api/lists</code>&#9;&#9;&#9;&#9; - Visszaadja az összes elérhető listát.<br>
-        <code>GET /api/lists/{id}</code>&#9;&#9;&#9; - Visszaadja a megadott azonosítójú lista részleteit.<br>
-        <code>POST /api/lists</code>&#9;&#9;&#9;&#9; - Új lista létrehozása.<br>
-        <code>PUT/PATCH /api/lists/{id}</code>&#9;&#9; - Meglévő lista módosítása.<br>
-        <code>DELETE /api/lists/{id}</code>&#9;&#9;&#9; - Lista törlése.<br>
-        <code>GET /api/items</code>&#9;&#9;&#9;&#9; - Visszaadja az összes elemet.<br>
-        <code>GET /api/items/{id}</code>&#9;&#9;&#9; - Visszaadja a megadott elem részleteit.<br>
-        <code>POST /api/items</code>&#9;&#9;&#9;&#9; - Új elem hozzáadása egy listához.<br>
-        <code>PUT/PATCH /api/items/{id}</code>&#9;&#9; - Elem módosítása.<br>
-        <code>DELETE /api/items/{id}</code>&#9;&#9;&#9; - Elem törlése.<br>
+        <code>GET /api/listnodes</code><br>
+        <code>GET /api/listnodes/{id}</code><br>
+        <code>GET /api/listnodes/{id}/children</code><br>
+        <code>POST /api/listnodes</code><br>
+        <code>PUT/PATCH /api/listnodes/{id}</code><br>
+        <code>DELETE /api/listnodes/{id}</code><br>
+        <code>POST /api/listnodes/{id}/share</code><br>
     </div>
 {% endblock %}
