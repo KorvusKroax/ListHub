@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import styles from './login.module.css';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -27,26 +28,35 @@ export default function LoginPage() {
   };
 
   return (
-    <main style={{ maxWidth: '30rem', margin: 'auto', padding: '2rem' }}>
-
-      <h1>Bejelentkezés</h1><br/>
-      <form onSubmit={handleSubmit}>
-
-        <div>
-          <label>Felhasználónév</label><br/>
-          <input type="text" value={username} onChange={e => setUsername(e.target.value)} required autoFocus />
-        </div>
-
-        <div>
-          <label>Jelszó</label><br/>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-        </div>
-
-        <button type="submit" style={{ marginTop: '1rem' }}>Belépés</button>
-
-        {error && <div style={{ color: 'red', marginTop: '1rem' }}>{error}</div>}
-
-      </form>
+    <main className={styles.container}>
+      <h1 className={styles.title}>ListHub</h1>
+      <br />
+      <div className={styles.loginBox}>
+        <h2>Bejelentkezés</h2>
+        <form onSubmit={handleSubmit}>
+          <div className={styles.field}>
+            <label className={styles.label}>
+              Felhasználónév
+            </label>
+            <input type="text" value={username} onChange={e => setUsername(e.target.value)} required autoFocus className={styles.input} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>
+              Jelszó
+            </label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className={styles.input} />
+          </div>
+          <br />
+          <button type="submit" className={styles.button}>
+            Belépés
+          </button>
+        </form>
+        {error && (
+          <div className={styles.error}>
+            {error}
+          </div>
+        )}
+      </div>
     </main>
   );
 }

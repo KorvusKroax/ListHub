@@ -45,7 +45,8 @@ export default function Home() {
   }, []);
 
   if (loading) return <main>Betöltés...</main>;
-  if (!isLoggedIn) return <main>Kérlek, <a href="/login">jelentkezz be</a>!</main>;
+  // if (!isLoggedIn) return <main>Kérlek, <a href="/login">jelentkezz be</a>!</main>;
+  if (!isLoggedIn) return window.location.href = '/login';
   if (error) return <main>Hiba: {error}</main>;
 
   const handleLogout = () => {
