@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -49,17 +48,9 @@ export default function Home() {
   if (!isLoggedIn) return window.location.href = '/login';
   if (error) return <main>Hiba: {error}</main>;
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.reload();
-  };
-
   return (
     <main>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Listáim</h1>
-        <button onClick={handleLogout}>Kijelentkezés</button>
-      </div>
+      <h1>Listáim</h1>
       {lists.length === 0 ? (
         <p>Nincs elérhető lista.</p>
       ) : (
