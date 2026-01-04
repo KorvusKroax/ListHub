@@ -77,7 +77,7 @@ export default function AddItemForm({ parentId, onItemAdded, isOpen, onClose }: 
           disabled={isSubmitting}
         >
           <option value="item">Elem</option>
-          <option value="sublist">Alista</option>
+          <option value="sublist">Allista</option>
         </select>
       </div>
       <div className="flex gap-2 justify-end">

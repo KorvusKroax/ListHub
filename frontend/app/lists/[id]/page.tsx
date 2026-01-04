@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AddItemForm from '@/app/components/AddItemForm';
 import ListItem from '@/app/components/ListItem';
+import LoadingSpinner from '@/app/components/LoadingSpinner';
+import { toggleListNode, deleteListNode, fetchChildren } from '@/app/utils/listNodeApi';
 
 type ListNode = {
   id: number;
@@ -48,15 +50,11 @@ export default function ListDetailPage() {
         const listData = await listResponse.json();
 
         // Fetch children separately
-        const childrenResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/listnodes/${id}/children`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (childrenResponse.ok) {
-          const childrenData = await childrenResponse.json();
+        try {
+          const childrenData = await fetchChildren(Number(id));
           listData.children = childrenData;
+        } catch (err) {
+          console.error('Hiba a gyerekek betöltésekor:', err);
         }
 
         setList(listData);
@@ -74,8 +72,8 @@ export default function ListDetailPage() {
     return (
       <main className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
-          <p className="mt-4 text-gray-600">Betöltés...</p>
+          <LoadingSpinner />
+          <p className="mt-4 text-gray-600">Lista tartalmának betöltése...</p>
         </div>
       </main>
     );
@@ -125,13 +123,7 @@ export default function ListDetailPage() {
     });
 
     // Validate by refreshing children
-    const token = localStorage.getItem('token');
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/listnodes/${id}/children`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    })
-      .then(res => res.json())
+    fetchChildren(Number(id))
       .then(children => {
         setList(prev => prev ? { ...prev, children } : null);
       })
@@ -149,46 +141,57 @@ export default function ListDetailPage() {
   };
 
   const handleToggleItem = async (itemId: number) => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    const item = list?.children?.find(i => i.id === itemId);
+    if (!item) return;
 
     // Optimistic update - toggle immediately
     setList(prev => {
       if (!prev?.children) return prev;
-      const updated = prev.children.map(item =>
-        item.id === itemId ? { ...item, isChecked: !item.isChecked } : item
+      const updated = prev.children.map(i =>
+        i.id === itemId ? { ...i, isChecked: !i.isChecked } : i
       );
       return { ...prev, children: updated };
     });
 
     try {
-      const item = list?.children?.find(i => i.id === itemId);
-      if (!item) return;
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/listnodes/${itemId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          isChecked: !item.isChecked,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Nem sikerült frissíteni az elemet');
-      }
+      await toggleListNode(itemId, item.isChecked);
     } catch (err) {
       console.error('Hiba az elem frissítésekor:', err);
       // Revert on error and show error message
       setList(prev => {
         if (!prev?.children) return prev;
-        const updated = prev.children.map(item =>
-          item.id === itemId ? { ...item, isChecked: !item.isChecked, error: 'Nem sikerült frissíteni' } : item
+        const updated = prev.children.map(i =>
+          i.id === itemId ? { ...i, isChecked: !i.isChecked, error: 'Nem sikerült frissíteni' } : i
         );
         return { ...prev, children: updated };
       });
+    }
+  };
+
+  const handleDeleteItem = async (itemId: number) => {
+    // Optimistic update - remove immediately
+    setList(prev => {
+      if (!prev?.children) return prev;
+      const updated = prev.children.filter(item => item.id !== itemId);
+      return { ...prev, children: updated };
+    });
+
+    try {
+      await deleteListNode(itemId);
+    } catch (err) {
+      console.error('Hiba az elem törlésekor:', err);
+      // Refresh children on error to restore the item
+      try {
+        const children = await fetchChildren(Number(id));
+        // Mark restored items with error message
+        const childrenWithErrors = children.map((child: ListNode) => ({
+          ...child,
+          error: 'Nem sikerült törölni'
+        }));
+        setList(prev => prev ? { ...prev, children: childrenWithErrors } : null);
+      } catch (fetchErr) {
+        console.error('Hiba a gyerekek újratöltésekor:', fetchErr);
+      }
     }
   };
 
@@ -240,6 +243,7 @@ export default function ListDetailPage() {
                   isChecked={item.isChecked}
                   error={item.error}
                   onToggle={handleToggleItem}
+                  onDelete={handleDeleteItem}
                 />
               ))}
             </ul>

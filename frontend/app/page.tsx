@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import ListCard from './components/ListCard';
 import NewListModal from './components/NewListModal';
+import LoadingSpinner from './components/LoadingSpinner';
 
 type ListNode = {
   id: number;
@@ -75,8 +76,8 @@ export default function Home() {
   if (loading) return (
     <main className="py-16 px-4 sm:px-6 lg:px-8">
       <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-        <p className="mt-4 text-gray-600">Betöltés...</p>
+        <LoadingSpinner />
+        <p className="mt-4 text-gray-600">Listák betöltése...</p>
       </div>
     </main>
   );

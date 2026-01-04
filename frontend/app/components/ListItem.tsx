@@ -1,5 +1,16 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { toggleListNode, deleteListNode, fetchChildren } from '@/app/utils/listNodeApi';
+
+type ListNode = {
+  id: number;
+  name: string;
+  type: string;
+  isChecked: boolean;
+  error?: string;
+};
+
 type ListItemProps = {
   id: number;
   name: string;
@@ -7,9 +18,78 @@ type ListItemProps = {
   isChecked: boolean;
   error?: string;
   onToggle?: (id: number) => void;
+  onDelete?: (id: number) => void;
 };
 
-export default function ListItem({ id, name, type, isChecked, error, onToggle }: ListItemProps) {
+export default function ListItem({ id, name, type, isChecked, error, onToggle, onDelete }: ListItemProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [children, setChildren] = useState<ListNode[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [childrenLoaded, setChildrenLoaded] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && type === 'sublist' && !childrenLoaded) {
+      setLoading(true);
+      fetchChildren(id)
+        .then(data => {
+          setChildren(data);
+          setChildrenLoaded(true);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Hiba az elem betöltésekor:', err);
+          setLoading(false);
+        });
+    }
+  }, [isOpen, type, id, childrenLoaded]);
+
+  const handleToggleOpen = () => {
+    if (type === 'sublist') {
+      setIsOpen(!isOpen);
+    }
+  };
+
+  const handleChildToggle = async (childId: number) => {
+    const child = children.find(c => c.id === childId);
+    if (!child) return;
+
+    // Optimistic update - toggle immediately in local state
+    setChildren(prev => prev.map(c =>
+      c.id === childId ? { ...c, isChecked: !c.isChecked } : c
+    ));
+
+    try {
+      await toggleListNode(childId, child.isChecked);
+    } catch (err) {
+      console.error('Hiba az elem frissítésekor:', err);
+      // Revert on error
+      setChildren(prev => prev.map(c =>
+        c.id === childId ? { ...c, isChecked: !c.isChecked, error: 'Nem sikerült frissíteni' } : c
+      ));
+    }
+  };
+
+  const handleChildDelete = async (childId: number) => {
+    // Optimistic update - remove immediately from local state
+    setChildren(prev => prev.filter(child => child.id !== childId));
+
+    try {
+      await deleteListNode(childId);
+    } catch (err) {
+      console.error('Hiba az elem törlésekor:', err);
+      // Refresh children on error
+      try {
+        const refreshedChildren = await fetchChildren(id);
+        setChildren(refreshedChildren.map((child: ListNode) => ({
+          ...child,
+          error: 'Nem sikerült törölni'
+        })));
+      } catch (fetchErr) {
+        console.error('Hiba az újratöltésekor:', fetchErr);
+      }
+    }
+  };
+
   return (
     <li
       className={`flex flex-col gap-2 p-3 border rounded hover:bg-gray-100 transition ${
@@ -33,18 +113,64 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle }:
           </>
         ) : (
           <>
-            <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span className="font-semibold text-gray-800 cursor-pointer hover:text-blue-600">
+            <button
+              onClick={handleToggleOpen}
+              className="focus:outline-none"
+            >
+              <svg
+                className={`w-4 h-4 text-blue-600 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            <span
+              onClick={handleToggleOpen}
+              className="font-semibold text-gray-800 cursor-pointer hover:text-blue-600"
+            >
               {name}
             </span>
           </>
         )}
+        <button
+          onClick={() => onDelete?.(id)}
+          className="ml-auto text-gray-400 hover:text-red-600 transition"
+          title="Törlés"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
       {error && (
         <div className="text-sm text-red-600 font-medium">
           {error}
+        </div>
+      )}
+      {isOpen && type === 'sublist' && (
+        <div className="ml-8 mt-2 space-y-2">
+          {loading ? (
+            <div className="text-sm text-gray-500 italic">Betöltés...</div>
+          ) : children.length > 0 ? (
+            <ul className="space-y-2">
+              {children.map(child => (
+                <ListItem
+                  key={child.id}
+                  id={child.id}
+                  name={child.name}
+                  type={child.type as 'item' | 'sublist'}
+                  isChecked={child.isChecked}
+                  error={child.error}
+                  onToggle={handleChildToggle}
+                  onDelete={handleChildDelete}
+                />
+              ))}
+            </ul>
+          ) : (
+            <div className="text-sm text-gray-500 italic">Még nincs elem ebben a listában.</div>
+          )}
         </div>
       )}
     </li>

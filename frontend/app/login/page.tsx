@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import LoadingSpinner from '@/app/components/LoadingSpinner';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -149,7 +150,7 @@ export default function LoginPage() {
             >
               {isLoading ? (
                 <span className="flex items-center gap-3">
-                  <span className="h-4 w-4 border-2 border-white/70 border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+                  <LoadingSpinner size="small" color="white" />
                   <span>Bejelentkezés</span>
                 </span>
               ) : (
