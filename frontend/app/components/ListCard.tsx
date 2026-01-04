@@ -1,11 +1,24 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+
 type ListNode = {
   id: number;
   name: string;
 };
 
 export default function ListCard({ list }: { list: ListNode }) {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push(`/lists/${list.id}`);
+  };
+
   return (
-    <div className="bg-gray-100 border border-gray-300 rounded p-6 hover:shadow-lg transition duration-200 cursor-pointer group">
+    <div
+      onClick={handleClick}
+      className="bg-gray-100 border border-gray-300 rounded p-6 hover:shadow-lg transition duration-200 cursor-pointer group"
+    >
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition duration-200">
           {list.name}
