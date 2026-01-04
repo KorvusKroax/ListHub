@@ -66,12 +66,12 @@ export default function LoginPage() {
   return (
     <main className="flex items-center justify-center p-4 my-8">
 
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+      <div className="w-full max-w-md bg-white rounded shadow-lg p-8">
 
           <h2 className="text-xl font-semibold text-gray-600 text-center mb-8">Bejelentkezés</h2>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded">
               <p className="text-red-800 text-sm font-medium flex items-center">
                 {error}
               </p>
@@ -93,7 +93,7 @@ export default function LoginPage() {
                 }}
                 disabled={isLoading}
                 autoFocus
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition ${
+                className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 transition ${
                   usernameError
                     ? 'border-red-300 focus:ring-red-500 bg-red-50'
                     : 'border-gray-300 focus:ring-blue-500'
@@ -119,7 +119,7 @@ export default function LoginPage() {
                     setPasswordError('');
                   }}
                   disabled={isLoading}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition ${
+                  className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 transition ${
                     passwordError
                       ? 'border-red-300 focus:ring-red-500 bg-red-50'
                       : 'border-gray-300 focus:ring-blue-500'
@@ -145,7 +145,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex items-center justify-center disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 px-4 rounded transition duration-200 flex items-center justify-center disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <span className="flex items-center gap-3">

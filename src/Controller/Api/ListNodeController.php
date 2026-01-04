@@ -74,9 +74,8 @@ class ListNodeController extends AbstractController
 
         $node = new ListNode($type);
         $node->setPosition($position);
-
+        $node->setName($data['name'] ?? null);
         if ($type === 'item') {
-            $node->setName($data['name'] ?? null);
             $node->setIsChecked($data['isChecked'] ?? false);
         }
 
