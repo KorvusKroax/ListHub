@@ -11,6 +11,7 @@ type ListNode = {
   name: string;
   type: string;
   isChecked: boolean;
+  position?: number;
   error?: string;
 };
 
@@ -61,7 +62,8 @@ export default function ListItem({ id, name, type, isChecked, error, index = 0, 
       setLoading(true);
       fetchChildren(id)
         .then(data => {
-          setChildren(data);
+          const sorted = [...data].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+          setChildren(sorted);
           setChildrenLoaded(true);
           setLoading(false);
         })
@@ -145,6 +147,44 @@ export default function ListItem({ id, name, type, isChecked, error, index = 0, 
   const handleCancelEdit = () => {
     setEditName(displayName);
     setIsEditing(false);
+  };
+
+  const handleChildPositionChange = async (childId: number, newPosition: number) => {
+    const currentIndex = children.findIndex(c => c.id === childId);
+    if (currentIndex === -1 || currentIndex === newPosition) return;
+
+    // Optimistic reorder in local state
+    setChildren(prev => {
+      const idx = prev.findIndex(c => c.id === childId);
+      if (idx === -1) return prev;
+      const updated = [...prev];
+      const [moved] = updated.splice(idx, 1);
+      updated.splice(newPosition, 0, moved);
+      return updated.map((child, position) => ({ ...child, position }));
+    });
+
+    try {
+      const reordered = [...children];
+      const [movedChild] = reordered.splice(currentIndex, 1);
+      reordered.splice(newPosition, 0, movedChild);
+
+      const updates = [] as Promise<void>[];
+      for (let i = Math.min(currentIndex, newPosition); i <= Math.max(currentIndex, newPosition); i++) {
+        const child = reordered[i];
+        updates.push(updateListNode(child.id, child.name, i));
+      }
+
+      await Promise.all(updates);
+    } catch (err) {
+      console.error('Hiba a pozícióváltáskor:', err);
+      try {
+        const refreshed = await fetchChildren(id);
+        const sorted = [...refreshed].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+        setChildren(sorted);
+      } catch (fetchErr) {
+        console.error('Hiba a gyerekek újratöltésekor:', fetchErr);
+      }
+    }
   };
 
   return (
@@ -257,6 +297,7 @@ export default function ListItem({ id, name, type, isChecked, error, index = 0, 
               items={children}
               onToggle={handleChildToggle}
               onDelete={handleChildDelete}
+              onPositionChange={handleChildPositionChange}
               emptyMessage="Még nincs elem ebben a listában."
             />
           )}
