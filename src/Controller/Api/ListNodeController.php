@@ -146,8 +146,10 @@ class ListNodeController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
+        // Update name for both items and sublists
+        if (isset($data['name'])) $node->setName($data['name']);
+
         if ($node->isItem()) {
-            if (isset($data['name'])) $node->setName($data['name']);
             if (isset($data['isChecked'])) $node->setIsChecked((bool)$data['isChecked']);
         }
 

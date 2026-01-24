@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ListNodeList from './ListNodeList';
-import { toggleListNode, deleteListNode, fetchChildren } from '@/app/utils/listNodeApi';
+import { toggleListNode, deleteListNode, fetchChildren, updateListNode } from '@/app/utils/listNodeApi';
 
 type ListNode = {
   id: number;
@@ -27,6 +27,14 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle, o
   const [children, setChildren] = useState<ListNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [childrenLoaded, setChildrenLoaded] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(name);
+  const [displayName, setDisplayName] = useState(name);
+
+  useEffect(() => {
+    setDisplayName(name);
+    setEditName(name);
+  }, [name]);
 
   useEffect(() => {
     if (isOpen && type === 'sublist' && !childrenLoaded) {
@@ -91,6 +99,34 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle, o
     }
   };
 
+  const handleSaveEdit = async () => {
+    if (!editName.trim()) {
+      setEditName(displayName);
+      setIsEditing(false);
+      return;
+    }
+
+    // Optimistic update - save old value for rollback
+    const oldName = displayName;
+    setDisplayName(editName);
+    setIsEditing(false);
+
+    try {
+      await updateListNode(id, editName);
+    } catch (err) {
+      console.error('Hiba a mentéskor:', err);
+      alert('Nem sikerült frissíteni a nevet');
+      // Revert on error
+      setDisplayName(oldName);
+      setEditName(oldName);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditName(displayName);
+    setIsEditing(false);
+  };
+
   return (
     <li className="py-1">
       <div className="flex items-center gap-3">
@@ -102,9 +138,27 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle, o
               onChange={() => onToggle?.(id)}
               className="w-4 h-4 text-blue-600 rounded cursor-pointer"
             />
-            <span className={isChecked ? 'line-through text-gray-400' : 'text-gray-800'}>
-              {name}
-            </span>
+            {isEditing ? (
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="flex-1 px-2 py-1 border border-blue-500 rounded text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                autoFocus
+                onBlur={handleSaveEdit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveEdit();
+                  if (e.key === 'Escape') handleCancelEdit();
+                }}
+              />
+            ) : (
+              <span
+                onDoubleClick={() => setIsEditing(true)}
+                className={`flex-1 cursor-text ${isChecked ? 'line-through text-gray-400' : 'text-gray-800 hover:text-blue-600'}`}
+              >
+                {displayName}
+              </span>
+            )}
           </>
         ) : (
           <>
@@ -121,12 +175,27 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle, o
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
-            <span
-              onClick={handleToggleOpen}
-              className="font-semibold text-gray-800 cursor-pointer hover:text-blue-600"
-            >
-              {name}
-            </span>
+            {isEditing ? (
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="flex-1 px-2 py-1 border border-blue-500 rounded font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                autoFocus
+                onBlur={handleSaveEdit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveEdit();
+                  if (e.key === 'Escape') handleCancelEdit();
+                }}
+              />
+            ) : (
+              <span
+                onDoubleClick={() => setIsEditing(true)}
+                className="font-semibold text-gray-800 cursor-text hover:text-blue-600"
+              >
+                {displayName}
+              </span>
+            )}
           </>
         )}
         <button

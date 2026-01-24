@@ -38,6 +38,28 @@ export async function deleteListNode(nodeId: number): Promise<void> {
   }
 }
 
+export async function updateListNode(nodeId: number, name: string): Promise<void> {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('Nincs token');
+  }
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/listnodes/${nodeId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: name,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Nem sikerült frissíteni');
+  }
+}
+
 export async function fetchChildren(parentId: number) {
   const token = localStorage.getItem('token');
   if (!token) {

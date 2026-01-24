@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import AddItemForm from '@/app/components/AddItemForm';
 import ListNodeList from '@/app/components/ListNodeList';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
-import { toggleListNode, deleteListNode, fetchChildren } from '@/app/utils/listNodeApi';
+import { toggleListNode, deleteListNode, fetchChildren, updateListNode } from '@/app/utils/listNodeApi';
 
 type ListNode = {
   id: number;
@@ -25,6 +25,8 @@ export default function ListDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editListName, setEditListName] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -58,6 +60,7 @@ export default function ListDetailPage() {
         }
 
         setList(listData);
+        setEditListName(listData.name || '');
         setLoading(false);
       } catch (err: any) {
         setError(err.message);
@@ -195,6 +198,34 @@ export default function ListDetailPage() {
     }
   };
 
+  const handleSaveListName = async () => {
+    if (!editListName.trim() || !list) {
+      setEditListName(list?.name || '');
+      setIsEditingName(false);
+      return;
+    }
+
+    // Optimistic update - save old value for rollback
+    const oldName = list.name;
+    setList(prev => prev ? { ...prev, name: editListName } : null);
+    setIsEditingName(false);
+
+    try {
+      await updateListNode(Number(id), editListName);
+    } catch (err) {
+      console.error('Hiba a mentéskor:', err);
+      alert('Nem sikerült frissíteni a lista nevét');
+      // Revert on error
+      setList(prev => prev ? { ...prev, name: oldName } : null);
+      setEditListName(oldName);
+    }
+  };
+
+  const handleCancelEditListName = () => {
+    setEditListName(list?.name || '');
+    setIsEditingName(false);
+  };
+
   return (
     <main className="py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
       <div className="mb-6">
@@ -211,18 +242,33 @@ export default function ListDetailPage() {
 
       <div className="bg-white rounded shadow-xl p-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{list.name}</h1>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition duration-200 cursor-pointer">
-              Szerkesztés
-            </button>
-            <button
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition duration-200 cursor-pointer"
+          {isEditingName ? (
+            <input
+              type="text"
+              value={editListName}
+              onChange={(e) => setEditListName(e.target.value)}
+              className="text-3xl font-bold text-gray-900 border border-blue-500 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 mr-4"
+              autoFocus
+              onBlur={handleSaveListName}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveListName();
+                if (e.key === 'Escape') handleCancelEditListName();
+              }}
+            />
+          ) : (
+            <h1
+              onDoubleClick={() => setIsEditingName(true)}
+              className="text-3xl font-bold text-gray-900 cursor-text hover:text-blue-600"
             >
-              + Új elem
-            </button>
-          </div>
+              {list.name}
+            </h1>
+          )}
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition duration-200 cursor-pointer"
+          >
+            + Új elem
+          </button>
         </div>
 
         <div className="space-y-4">
