@@ -35,7 +35,7 @@ export default function NewListModal({ isOpen, onClose, onSubmit }: NewListModal
           <h2 className="text-2xl font-bold text-gray-900">Új lista létrehozása</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition"
+            className="text-gray-400 hover:text-gray-600 transition cursor-pointer"
             disabled={isSubmitting}
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -66,14 +66,14 @@ export default function NewListModal({ isOpen, onClose, onSubmit }: NewListModal
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition duration-200"
+              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition duration-200 cursor-pointer disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
               Mégse
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition duration-200 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
               disabled={isSubmitting || !listName.trim()}
             >
               {isSubmitting ? 'Létrehozás...' : 'Létrehozás'}

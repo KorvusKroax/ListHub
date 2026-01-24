@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AddItemForm from '@/app/components/AddItemForm';
-import ListItem from '@/app/components/ListItem';
+import ListNodeList from '@/app/components/ListNodeList';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
 import { toggleListNode, deleteListNode, fetchChildren } from '@/app/utils/listNodeApi';
 
@@ -200,7 +200,7 @@ export default function ListDetailPage() {
       <div className="mb-6">
         <button
           onClick={() => router.push('/')}
-          className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4"
+          className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4 cursor-pointer"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -213,12 +213,12 @@ export default function ListDetailPage() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">{list.name}</h1>
           <div className="flex gap-2">
-            <button className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition duration-200">
+            <button className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition duration-200 cursor-pointer">
               Szerkesztés
             </button>
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition duration-200"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition duration-200 cursor-pointer"
             >
               + Új elem
             </button>
@@ -232,25 +232,12 @@ export default function ListDetailPage() {
             onClose={() => setShowAddForm(false)}
             onItemAdded={handleItemAdded}
           />
-          {list.children && list.children.length > 0 ? (
-            <ul className="space-y-2">
-              {list.children.map((item) => (
-                <ListItem
-                  key={item.id}
-                  id={item.id}
-                  name={item.name}
-                  type={item.type as 'item' | 'sublist'}
-                  isChecked={item.isChecked}
-                  error={item.error}
-                  onToggle={handleToggleItem}
-                  onDelete={handleDeleteItem}
-                />
-              ))}
-            </ul>
-          ) : (
-            <div className="text-center py-12 text-gray-500">
-              Nincs még elem ebben a listában.
-            </div>
+          {list.children && (
+            <ListNodeList
+              items={list.children}
+              onToggle={handleToggleItem}
+              onDelete={handleDeleteItem}
+            />
           )}
         </div>
       </div>

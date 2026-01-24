@@ -100,7 +100,7 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-gray-900">Listáim</h1>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition duration-200 shadow-md hover:shadow-lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition duration-200 shadow-md hover:shadow-lg cursor-pointer"
           >
             + Új lista
           </button>

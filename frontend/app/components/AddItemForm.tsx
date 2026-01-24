@@ -88,14 +88,14 @@ export default function AddItemForm({ parentId, onItemAdded, isOpen, onClose }: 
             setItemName('');
             setItemType('item');
           }}
-          className="px-3 py-2 text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition"
+          className="px-3 py-2 text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition cursor-pointer disabled:cursor-not-allowed"
           disabled={isSubmitting}
         >
           Mégse
         </button>
         <button
           type="submit"
-          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition disabled:opacity-50"
+          className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
           disabled={isSubmitting || !itemName.trim()}
         >
           {isSubmitting ? 'Hozzáadás...' : 'Hozzáadás'}

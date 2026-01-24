@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ListNodeList from './ListNodeList';
 import { toggleListNode, deleteListNode, fetchChildren } from '@/app/utils/listNodeApi';
 
 type ListNode = {
@@ -91,13 +92,7 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle, o
   };
 
   return (
-    <li
-      className={`flex flex-col gap-2 p-3 border rounded hover:bg-gray-100 transition ${
-        error
-          ? 'bg-red-50 border-red-300'
-          : 'bg-gray-50 border-gray-200'
-      }`}
-    >
+    <li className="py-1">
       <div className="flex items-center gap-3">
         {type === 'item' ? (
           <>
@@ -115,7 +110,7 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle, o
           <>
             <button
               onClick={handleToggleOpen}
-              className="focus:outline-none"
+              className="focus:outline-none cursor-pointer"
             >
               <svg
                 className={`w-4 h-4 text-blue-600 transition-transform ${isOpen ? 'rotate-90' : ''}`}
@@ -136,7 +131,7 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle, o
         )}
         <button
           onClick={() => onDelete?.(id)}
-          className="ml-auto text-gray-400 hover:text-red-600 transition"
+          className="ml-auto text-gray-400 hover:text-red-600 transition cursor-pointer"
           title="Törlés"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -145,31 +140,21 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle, o
         </button>
       </div>
       {error && (
-        <div className="text-sm text-red-600 font-medium">
+        <div className="mt-1 text-sm text-red-600 font-medium">
           {error}
         </div>
       )}
       {isOpen && type === 'sublist' && (
-        <div className="ml-8 mt-2 space-y-2">
+        <div className="ml-6 mt-2">
           {loading ? (
             <div className="text-sm text-gray-500 italic">Betöltés...</div>
-          ) : children.length > 0 ? (
-            <ul className="space-y-2">
-              {children.map(child => (
-                <ListItem
-                  key={child.id}
-                  id={child.id}
-                  name={child.name}
-                  type={child.type as 'item' | 'sublist'}
-                  isChecked={child.isChecked}
-                  error={child.error}
-                  onToggle={handleChildToggle}
-                  onDelete={handleChildDelete}
-                />
-              ))}
-            </ul>
           ) : (
-            <div className="text-sm text-gray-500 italic">Még nincs elem ebben a listában.</div>
+            <ListNodeList
+              items={children}
+              onToggle={handleChildToggle}
+              onDelete={handleChildDelete}
+              emptyMessage="Még nincs elem ebben a listában."
+            />
           )}
         </div>
       )}

@@ -16,7 +16,7 @@ export default function Header() {
 
         {!loading && user && (
           <button
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition duration-200"
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition duration-200 cursor-pointer"
             onClick={logout}
           >
             Kijelentkezés
