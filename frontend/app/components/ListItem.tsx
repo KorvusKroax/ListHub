@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import ListNodeList from './ListNodeList';
 import { toggleListNode, deleteListNode, fetchChildren, updateListNode } from '@/app/utils/listNodeApi';
 
@@ -33,6 +35,21 @@ export default function ListItem({ id, name, type, isChecked, error, index = 0, 
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(name);
   const [displayName, setDisplayName] = useState(name);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   useEffect(() => {
     setDisplayName(name);
@@ -130,19 +147,24 @@ export default function ListItem({ id, name, type, isChecked, error, index = 0, 
     setIsEditing(false);
   };
 
-  const handleMoveUp = async () => {
-    if (index === 0 || !onPositionChange) return;
-    onPositionChange(id, index - 1);
-  };
-
-  const handleMoveDown = async () => {
-    if (index === totalItems - 1 || !onPositionChange) return;
-    onPositionChange(id, index + 1);
-  };
-
   return (
-    <li className="py-1">
+    <li ref={setNodeRef} style={style} className="py-1">
       <div className="flex items-center gap-3">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 p-1"
+          title="Húzd az elem mozgatásához"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="7" cy="6" r="1.5" />
+            <circle cx="7" cy="12" r="1.5" />
+            <circle cx="7" cy="18" r="1.5" />
+            <circle cx="13" cy="6" r="1.5" />
+            <circle cx="13" cy="12" r="1.5" />
+            <circle cx="13" cy="18" r="1.5" />
+          </svg>
+        </button>
         {type === 'item' ? (
           <>
             <input
@@ -166,7 +188,7 @@ export default function ListItem({ id, name, type, isChecked, error, index = 0, 
               />
             ) : (
               <span
-                onDoubleClick={() => setIsEditing(true)}
+                onClick={() => setIsEditing(true)}
                 className={`flex-1 cursor-text ${isChecked ? 'line-through text-gray-400' : 'text-gray-800 hover:text-blue-600'}`}
               >
                 {displayName}
@@ -203,7 +225,7 @@ export default function ListItem({ id, name, type, isChecked, error, index = 0, 
               />
             ) : (
               <span
-                onDoubleClick={() => setIsEditing(true)}
+                onClick={() => setIsEditing(true)}
                 className="font-semibold text-gray-800 cursor-text hover:text-blue-600"
               >
                 {displayName}
@@ -211,28 +233,6 @@ export default function ListItem({ id, name, type, isChecked, error, index = 0, 
             )}
           </>
         )}
-        <div className="flex gap-1 ml-auto">
-          <button
-            onClick={handleMoveUp}
-            disabled={index === 0}
-            className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
-            title="Fel"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-            </svg>
-          </button>
-          <button
-            onClick={handleMoveDown}
-            disabled={index === totalItems - 1}
-            className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
-            title="Le"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
         <button
           onClick={() => onDelete?.(id)}
           className="ml-auto text-gray-400 hover:text-red-600 transition cursor-pointer"

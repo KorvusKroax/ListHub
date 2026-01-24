@@ -203,36 +203,48 @@ export default function ListDetailPage() {
   };
 
   const handlePositionChange = async (itemId: number, newPosition: number) => {
-    // Get the current item and the item at the new position
-    const currentItem = list?.children?.find(i => i.id === itemId);
-    const itemAtNewPosition = list?.children?.[newPosition];
-    if (!currentItem || !itemAtNewPosition) return;
+    if (!list?.children) return;
 
-    const currentIndex = list?.children?.findIndex(i => i.id === itemId) ?? -1;
-    if (currentIndex === -1) return;
+    const currentIndex = list.children.findIndex(i => i.id === itemId);
+    if (currentIndex === -1 || currentIndex === newPosition) return;
 
-    // Optimistic update - swap items immediately
+    // Optimistic update - insert item at new position
     setList(prev => {
       if (!prev?.children) return prev;
       const updated = [...prev.children];
 
-      // Swap items
-      [updated[currentIndex], updated[newPosition]] = [updated[newPosition], updated[currentIndex]];
+      // Remove item from current position
+      const [movedItem] = updated.splice(currentIndex, 1);
 
-      // Update positions
+      // Insert at new position
+      updated.splice(newPosition, 0, movedItem);
+
+      // Update all positions
+      const reordered = updated.map((item, idx) => ({
+        ...item,
+        position: idx
+      }));
+
       return {
         ...prev,
-        children: updated.map((item, idx) => ({
-          ...item,
-          position: idx
-        }))
+        children: reordered
       };
     });
 
     try {
-      // Update both items' positions
-      await updateListNode(itemId, currentItem.name, newPosition);
-      await updateListNode(itemAtNewPosition.id, itemAtNewPosition.name, currentIndex);
+      // Update positions for all affected items
+      const updates = [];
+      const reorderedItems = [...list.children];
+      const [movedItem] = reorderedItems.splice(currentIndex, 1);
+      reorderedItems.splice(newPosition, 0, movedItem);
+
+      // Update positions in backend for all affected items
+      for (let i = Math.min(currentIndex, newPosition); i <= Math.max(currentIndex, newPosition); i++) {
+        const item = reorderedItems[i];
+        updates.push(updateListNode(item.id, item.name, i));
+      }
+
+      await Promise.all(updates);
     } catch (err) {
       console.error('Hiba a pozícióváltáskor:', err);
       // Refresh children on error
