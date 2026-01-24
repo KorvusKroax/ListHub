@@ -18,11 +18,14 @@ type ListItemProps = {
   type: 'item' | 'sublist';
   isChecked: boolean;
   error?: string;
+  index?: number;
+  totalItems?: number;
   onToggle?: (id: number) => void;
   onDelete?: (id: number) => void;
+  onPositionChange?: (itemId: number, newPosition: number) => void;
 };
 
-export default function ListItem({ id, name, type, isChecked, error, onToggle, onDelete }: ListItemProps) {
+export default function ListItem({ id, name, type, isChecked, error, index = 0, totalItems = 1, onToggle, onDelete, onPositionChange }: ListItemProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [children, setChildren] = useState<ListNode[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,6 +130,16 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle, o
     setIsEditing(false);
   };
 
+  const handleMoveUp = async () => {
+    if (index === 0 || !onPositionChange) return;
+    onPositionChange(id, index - 1);
+  };
+
+  const handleMoveDown = async () => {
+    if (index === totalItems - 1 || !onPositionChange) return;
+    onPositionChange(id, index + 1);
+  };
+
   return (
     <li className="py-1">
       <div className="flex items-center gap-3">
@@ -198,6 +211,28 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle, o
             )}
           </>
         )}
+        <div className="flex gap-1 ml-auto">
+          <button
+            onClick={handleMoveUp}
+            disabled={index === 0}
+            className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+            title="Fel"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
+          </button>
+          <button
+            onClick={handleMoveDown}
+            disabled={index === totalItems - 1}
+            className="text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
+            title="Le"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
         <button
           onClick={() => onDelete?.(id)}
           className="ml-auto text-gray-400 hover:text-red-600 transition cursor-pointer"
@@ -216,7 +251,7 @@ export default function ListItem({ id, name, type, isChecked, error, onToggle, o
       {isOpen && type === 'sublist' && (
         <div className="ml-6 mt-2">
           {loading ? (
-            <div className="text-sm text-gray-500 italic">Betöltés...</div>
+            <div className="px-3 py-1 text-gray-500 italic">Betöltés...</div>
           ) : (
             <ListNodeList
               items={children}

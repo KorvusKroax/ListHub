@@ -54,6 +54,8 @@ export default function ListDetailPage() {
         // Fetch children separately
         try {
           const childrenData = await fetchChildren(Number(id));
+          // Sort children by position
+          childrenData.sort((a: ListNode, b: ListNode) => a.position - b.position);
           listData.children = childrenData;
         } catch (err) {
           console.error('Hiba a gyerekek betöltésekor:', err);
@@ -128,6 +130,8 @@ export default function ListDetailPage() {
     // Validate by refreshing children
     fetchChildren(Number(id))
       .then(children => {
+        // Sort children by position
+        children.sort((a: ListNode, b: ListNode) => a.position - b.position);
         setList(prev => prev ? { ...prev, children } : null);
       })
       .catch(err => {
@@ -192,6 +196,51 @@ export default function ListDetailPage() {
           error: 'Nem sikerült törölni'
         }));
         setList(prev => prev ? { ...prev, children: childrenWithErrors } : null);
+      } catch (fetchErr) {
+        console.error('Hiba a gyerekek újratöltésekor:', fetchErr);
+      }
+    }
+  };
+
+  const handlePositionChange = async (itemId: number, newPosition: number) => {
+    // Get the current item and the item at the new position
+    const currentItem = list?.children?.find(i => i.id === itemId);
+    const itemAtNewPosition = list?.children?.[newPosition];
+    if (!currentItem || !itemAtNewPosition) return;
+
+    const currentIndex = list?.children?.findIndex(i => i.id === itemId) ?? -1;
+    if (currentIndex === -1) return;
+
+    // Optimistic update - swap items immediately
+    setList(prev => {
+      if (!prev?.children) return prev;
+      const updated = [...prev.children];
+
+      // Swap items
+      [updated[currentIndex], updated[newPosition]] = [updated[newPosition], updated[currentIndex]];
+
+      // Update positions
+      return {
+        ...prev,
+        children: updated.map((item, idx) => ({
+          ...item,
+          position: idx
+        }))
+      };
+    });
+
+    try {
+      // Update both items' positions
+      await updateListNode(itemId, currentItem.name, newPosition);
+      await updateListNode(itemAtNewPosition.id, itemAtNewPosition.name, currentIndex);
+    } catch (err) {
+      console.error('Hiba a pozícióváltáskor:', err);
+      // Refresh children on error
+      try {
+        const children = await fetchChildren(Number(id));
+        // Sort children by position
+        children.sort((a: ListNode, b: ListNode) => a.position - b.position);
+        setList(prev => prev ? { ...prev, children } : null);
       } catch (fetchErr) {
         console.error('Hiba a gyerekek újratöltésekor:', fetchErr);
       }
@@ -283,6 +332,7 @@ export default function ListDetailPage() {
               items={list.children}
               onToggle={handleToggleItem}
               onDelete={handleDeleteItem}
+              onPositionChange={handlePositionChange}
             />
           )}
         </div>

@@ -38,10 +38,15 @@ export async function deleteListNode(nodeId: number): Promise<void> {
   }
 }
 
-export async function updateListNode(nodeId: number, name: string): Promise<void> {
+export async function updateListNode(nodeId: number, name: string, position?: number): Promise<void> {
   const token = localStorage.getItem('token');
   if (!token) {
     throw new Error('Nincs token');
+  }
+
+  const body: any = { name: name };
+  if (position !== undefined) {
+    body.position = position;
   }
 
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/listnodes/${nodeId}`, {
@@ -50,9 +55,7 @@ export async function updateListNode(nodeId: number, name: string): Promise<void
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      name: name,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
