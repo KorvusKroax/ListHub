@@ -2,29 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import AddItemForm from '@/app/components/AddItemForm';
+// import AddItemForm from '@/app/components/AddItemForm';
 import ListNodeList from '@/app/components/ListNodeList';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
 import { toggleListNode, deleteListNode, fetchChildren, updateListNode } from '@/app/utils/listNodeApi';
-
-type ListNode = {
-  id: number;
-  name: string;
-  type: string;
-  isChecked: boolean;
-  position: number;
-  children?: ListNode[];
-  error?: string;
-};
+// import AddListNodeForm from '@/app/components/AddListNodeForm';
+import { ListNodeType } from '@/app/components/ListNode';
 
 export default function ListDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id?.toString() ?? '';
-  const [list, setList] = useState<ListNode | null>(null);
+  const [list, setList] = useState<ListNodeType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
+  // const [showAddForm, setShowAddForm] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editListName, setEditListName] = useState('');
 
@@ -55,7 +47,7 @@ export default function ListDetailPage() {
         try {
           const childrenData = await fetchChildren(Number(id));
           // Sort children by position
-          childrenData.sort((a: ListNode, b: ListNode) => a.position - b.position);
+          childrenData.sort((a: ListNodeType, b: ListNodeType) => a.position - b.position);
           listData.children = childrenData;
         } catch (err) {
           console.error('Hiba a gyerekek betöltésekor:', err);
@@ -117,8 +109,8 @@ export default function ListDetailPage() {
     );
   }
 
-  const handleItemAdded = (newItem: ListNode) => {
-    setShowAddForm(false);
+  const handleListNodeAdded = (newItem: ListNodeType) => {
+    // setShowAddForm(false);
 
     // Optimistic update - add item immediately
     setList(prev => {
@@ -131,7 +123,7 @@ export default function ListDetailPage() {
     fetchChildren(Number(id))
       .then(children => {
         // Sort children by position
-        children.sort((a: ListNode, b: ListNode) => a.position - b.position);
+        children.sort((a: ListNodeType, b: ListNodeType) => a.position - b.position);
         setList(prev => prev ? { ...prev, children } : null);
       })
       .catch(err => {
@@ -172,33 +164,6 @@ export default function ListDetailPage() {
         );
         return { ...prev, children: updated };
       });
-    }
-  };
-
-  const handleDeleteItem = async (itemId: number) => {
-    // Optimistic update - remove immediately
-    setList(prev => {
-      if (!prev?.children) return prev;
-      const updated = prev.children.filter(item => item.id !== itemId);
-      return { ...prev, children: updated };
-    });
-
-    try {
-      await deleteListNode(itemId);
-    } catch (err) {
-      console.error('Hiba az elem törlésekor:', err);
-      // Refresh children on error to restore the item
-      try {
-        const children = await fetchChildren(Number(id));
-        // Mark restored items with error message
-        const childrenWithErrors = children.map((child: ListNode) => ({
-          ...child,
-          error: 'Nem sikerült törölni'
-        }));
-        setList(prev => prev ? { ...prev, children: childrenWithErrors } : null);
-      } catch (fetchErr) {
-        console.error('Hiba a gyerekek újratöltésekor:', fetchErr);
-      }
     }
   };
 
@@ -251,7 +216,7 @@ export default function ListDetailPage() {
       try {
         const children = await fetchChildren(Number(id));
         // Sort children by position
-        children.sort((a: ListNode, b: ListNode) => a.position - b.position);
+        children.sort((a: ListNodeType, b: ListNodeType) => a.position - b.position);
         setList(prev => prev ? { ...prev, children } : null);
       } catch (fetchErr) {
         console.error('Hiba a gyerekek újratöltésekor:', fetchErr);
@@ -287,12 +252,58 @@ export default function ListDetailPage() {
     setIsEditingName(false);
   };
 
+  const handleDeleteItem = async (itemId: number) => {
+    // Optimistic update - remove immediately
+    setList(prev => {
+      if (!prev?.children) return prev;
+      const updated = prev.children.filter(item => item.id !== itemId);
+      return { ...prev, children: updated };
+    });
+
+    try {
+      await deleteListNode(itemId);
+      // Refresh children after successful deletion to get correct positions
+      try {
+        const children = await fetchChildren(Number(id));
+        children.sort((a: ListNodeType, b: ListNodeType) => a.position - b.position);
+        setList(prev => prev ? { ...prev, children } : null);
+      } catch (fetchErr) {
+        console.error('Hiba a gyerekek újratöltésekor:', fetchErr);
+      }
+    } catch (err) {
+      console.error('Hiba az elem törlésekor:', err);
+      // Refresh children on error to restore the item
+      try {
+        const children = await fetchChildren(Number(id));
+        // Mark restored items with error message
+        const childrenWithErrors = children.map((child: ListNodeType) => ({
+          ...child,
+          error: 'Nem sikerült törölni'
+        }));
+        setList(prev => prev ? { ...prev, children: childrenWithErrors } : null);
+      } catch (fetchErr) {
+        console.error('Hiba a gyerekek újratöltésekor:', fetchErr);
+      }
+    }
+  };
+
+  const handleItemCreated = async () => {
+    try {
+      const children = await fetchChildren(Number(id));
+      // Sort children by position
+      children.sort((a: ListNodeType, b: ListNodeType) => a.position - b.position);
+      setList(prev => prev ? { ...prev, children } : null);
+    } catch (err) {
+      console.error('Hiba a gyerekek újratöltésekor:', err);
+    }
+  };
+
   return (
     <main className="py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
       <div className="mb-6">
         <button
           onClick={() => router.push('/')}
-          className="text-gray-600 hover:text-gray-900 flex items-center gap-2 mb-4 cursor-pointer"
+          className="text-gray-600 hover:text-blue-600 flex items-center gap-2 mb-4 cursor-pointer"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -301,7 +312,7 @@ export default function ListDetailPage() {
         </button>
       </div>
 
-      <div className="bg-white rounded shadow-xl p-8">
+      <div className="bg-gray-50 rounded shadow-xl p-8">
         <div className="flex items-center justify-between mb-8">
           {isEditingName ? (
             <input
@@ -324,29 +335,36 @@ export default function ListDetailPage() {
               {list.name}
             </h1>
           )}
+{/*
           <button
             onClick={() => setShowAddForm(!showAddForm)}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition duration-200 cursor-pointer"
           >
             + Új elem
           </button>
+*/}
         </div>
-
         <div className="space-y-4">
-          <AddItemForm
-            parentId={id}
+{/*
+          <AddListNodeForm
             isOpen={showAddForm}
+            parentId={id}
+            itemType="item"
+            onListNodeAdded={handleListNodeAdded}
             onClose={() => setShowAddForm(false)}
-            onItemAdded={handleItemAdded}
           />
+ */}
           {list.children && (
             <ListNodeList
+              parentId={Number(id)}
               items={list.children}
               onToggle={handleToggleItem}
               onDelete={handleDeleteItem}
               onPositionChange={handlePositionChange}
+              onItemCreated={handleItemCreated}
             />
           )}
+
         </div>
       </div>
     </main>

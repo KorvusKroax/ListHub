@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { updateListNode } from '@/app/utils/listNodeApi';
+import { updateListNode, createListNode } from '@/app/utils/listNodeApi';
 import Item from './Item';
 import Sublist from './Sublist';
 
@@ -12,8 +12,9 @@ export type ListNodeType = {
   name: string;
   type: string;
   isChecked: boolean;
-  position?: number;
-  parentId?: number;
+  position: number;
+  parentId: number;
+  children?: ListNodeType[];
   error?: string;
 };
 
@@ -23,12 +24,16 @@ type ListNodeProps = {
   type: 'item' | 'sublist';
   isChecked: boolean;
   error?: string;
+  isEditing?: boolean;
+  isNew?: boolean;
+  parentId?: number;
   onToggle?: (id: number) => void;
   onDelete?: (id: number) => void;
+  onCreated?: (tempId: number) => Promise<void>;
 };
 
 export function ListNode(props: ListNodeProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(props.isEditing || false);
   const [editName, setEditName] = useState(props.name);
   const [displayName, setDisplayName] = useState(props.name);
 
@@ -54,8 +59,8 @@ export function ListNode(props: ListNodeProps) {
 
   const handleSaveEdit = async () => {
     if (!editName.trim()) {
-      setEditName(displayName);
-      setIsEditing(false);
+      // Empty name: remove the item (new or existing)
+      props.onDelete?.(props.id);
       return;
     }
 
@@ -65,10 +70,17 @@ export function ListNode(props: ListNodeProps) {
     setIsEditing(false);
 
     try {
-      await updateListNode(props.id, editName);
+      if (props.isNew && props.parentId !== undefined) {
+        // Create new item
+        await createListNode(props.parentId, editName, props.type);
+        await props.onCreated?.(props.id);
+      } else {
+        // Update existing item
+        await updateListNode(props.id, editName);
+      }
     } catch (err) {
       console.error('Hiba a mentéskor:', err);
-      alert('Nem sikerült frissíteni a nevet');
+      alert(props.isNew ? 'Nem sikerült létrehozni' : 'Nem sikerült frissíteni a nevet');
       // Revert on error
       setDisplayName(oldName);
       setEditName(oldName);
@@ -76,8 +88,13 @@ export function ListNode(props: ListNodeProps) {
   };
 
   const handleCancelEdit = () => {
-    setEditName(displayName);
-    setIsEditing(false);
+    if (props.isNew) {
+      // If it's a new item and user cancels, delete it
+      props.onDelete?.(props.id);
+    } else {
+      setEditName(displayName);
+      setIsEditing(false);
+    }
   };
 
   return (

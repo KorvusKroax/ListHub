@@ -63,6 +63,32 @@ export async function updateListNode(nodeId: number, name: string, position?: nu
   }
 }
 
+export async function createListNode(parentId: number, name: string, type: string = 'item'): Promise<any> {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('Nincs token');
+  }
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/listnodes`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: name,
+      type: type,
+      parentId: parentId,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Nem sikerült létrehozni');
+  }
+
+  return response.json();
+}
+
 export async function fetchChildren(parentId: number) {
   const token = localStorage.getItem('token');
   if (!token) {

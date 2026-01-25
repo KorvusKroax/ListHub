@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { fetchChildren, toggleListNode, deleteListNode, updateListNode } from "../utils/listNodeApi";
 import { ListNodeType } from "./ListNode";
 import ListNodeList from "./ListNodeList";
+import EditableInput from "./EditableInput";
 
 type SublistProps = {
   id: number;
@@ -40,10 +41,6 @@ export default function Sublist(props: SublistProps) {
     }
   }, [isOpen, props.id, childrenLoaded]);
 
-
-
-
-
   const handleToggle = async (childId: number) => {
     const child = children.find(c => c.id === childId);
     if (!child) return;
@@ -70,6 +67,14 @@ export default function Sublist(props: SublistProps) {
 
     try {
       await deleteListNode(childId);
+      // Refresh children after successful deletion to get correct positions
+      try {
+        const refreshedChildren = await fetchChildren(props.id);
+        const sorted = [...refreshedChildren].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+        setChildren(sorted);
+      } catch (fetchErr) {
+        console.error('Hiba az újratöltésekor:', fetchErr);
+      }
     } catch (err) {
       console.error('Hiba az elem törlésekor:', err);
       // Refresh children on error
@@ -123,9 +128,15 @@ export default function Sublist(props: SublistProps) {
     }
   };
 
-
-
-
+  const handleItemCreated = async () => {
+    try {
+      const refreshed = await fetchChildren(props.id);
+      const sorted = [...refreshed].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+      setChildren(sorted);
+    } catch (err) {
+      console.error('Hiba a gyerekek újratöltésekor:', err);
+    }
+  };
 
   return (
     <>
@@ -145,17 +156,11 @@ export default function Sublist(props: SublistProps) {
 
       <div className="flex-1">
         {props.isEditing ? (
-          <input
-            type="text"
+          <EditableInput
             value={props.editName}
-            onChange={(e) => props.setEditName(e.target.value)}
-            className="flex-1 px-2 py-1 border border-blue-500 rounded font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
-            autoFocus
-            onBlur={props.handleSaveEdit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') props.handleSaveEdit();
-              if (e.key === 'Escape') props.handleCancelEdit();
-            }}
+            onChange={props.setEditName}
+            onSave={props.handleSaveEdit}
+            onCancel={props.handleCancelEdit}
           />
         ) : (
           <span
@@ -169,13 +174,15 @@ export default function Sublist(props: SublistProps) {
         {isOpen && (
           <div className="-ml-10 mt-2">
             {loading ? (
-              <div className="py-1 text-gray-500 italic">Betöltés...</div>
+              <div className="px-2 py-1 text-gray-500 italic">Betöltés...</div>
             ) : (
               <ListNodeList
+                parentId={props.id}
                 items={children}
                 onToggle={handleToggle}
                 onDelete={handleDelete}
                 onPositionChange={handlePositionChange}
+                onItemCreated={handleItemCreated}
               />
             )}
           </div>
