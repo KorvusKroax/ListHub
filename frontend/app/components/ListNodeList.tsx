@@ -36,11 +36,11 @@ export default function ListNodeList(props: ListNodeListProps) {
     }
   };
 
-  const addNewEmptyItem = () => {
+  const addNewEmptyItem = (type: 'item' | 'sublist') => {
     const newItem: ListNodeType = {
       id: Date.now(), // Temporary ID until saved to backend
       name: '',
-      type: 'item',
+      type: type,
       isChecked: false,
       position: props.items.length + newItems.length,
       parentId: props.parentId,
@@ -98,12 +98,18 @@ export default function ListNodeList(props: ListNodeListProps) {
             />
           ))}
           {newItems.length === 0 && (
-            <li className="px-1 py-1">
+            <li className="px-1 py-1 flex space-x-2">
               <button
-                onClick={addNewEmptyItem}
+                onClick={() => addNewEmptyItem('item')}
                 className="px-10 py-0.25 bg-blue-600 hover:bg-blue-700 text-white rounded transition duration-200 cursor-pointer"
               >
                 + Új elem
+              </button>
+              <button
+                onClick={() => addNewEmptyItem('sublist')}
+                className="px-10 py-0.25 bg-green-600 hover:bg-green-700 text-white rounded transition duration-200 cursor-pointer"
+              >
+                + Új lista
               </button>
             </li>
           )}
