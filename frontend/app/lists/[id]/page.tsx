@@ -298,6 +298,17 @@ export default function ListDetailPage() {
     }
   };
 
+  const handleShareList = () => {
+    // For simplicity, just alert the share link
+    const shareLink = `${window.location.origin}/lists/${id}`;
+    alert(`Megosztási link: ${shareLink}`);
+  };
+
+  const handleDeleteList = () => {
+    // For simplicity, just navigate back to main page
+    router.push('/');
+  };
+
   return (
     <main className="py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
       <div className="mb-6">
@@ -335,25 +346,24 @@ export default function ListDetailPage() {
               {list.name}
             </h1>
           )}
-{/*
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition duration-200 cursor-pointer"
-          >
-            + Új elem
-          </button>
-*/}
+
+          <div className="flex space-x-4">
+            <button
+              onClick={handleShareList}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition duration-200 cursor-pointer"
+            >
+              Megosztás
+            </button>
+            <button
+              onClick={handleDeleteList}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition duration-200 cursor-pointer"
+            >
+              Törlés
+            </button>
+          </div>
         </div>
+
         <div className="space-y-4">
-{/*
-          <AddListNodeForm
-            isOpen={showAddForm}
-            parentId={id}
-            itemType="item"
-            onListNodeAdded={handleListNodeAdded}
-            onClose={() => setShowAddForm(false)}
-          />
- */}
           {list.children && (
             <ListNodeList
               parentId={Number(id)}
