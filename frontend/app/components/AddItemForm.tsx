@@ -9,14 +9,14 @@ type AddItemFormProps = {
   onClose: () => void;
 };
 
-export default function AddItemForm({ parentId, onItemAdded, isOpen, onClose }: AddItemFormProps) {
+export default function AddItemForm(props: AddItemFormProps) {
   const [itemName, setItemName] = useState('');
   const [itemType, setItemType] = useState<'item' | 'sublist'>('item');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!itemName.trim() || !parentId) return;
+    if (!itemName.trim() || !props.parentId) return;
 
     setIsSubmitting(true);
     const token = localStorage.getItem('token');
@@ -31,7 +31,7 @@ export default function AddItemForm({ parentId, onItemAdded, isOpen, onClose }: 
         body: JSON.stringify({
           name: itemName,
           type: itemType,
-          parentId: parseInt(parentId),
+          parentId: parseInt(props.parentId),
         }),
       });
 
@@ -42,10 +42,10 @@ export default function AddItemForm({ parentId, onItemAdded, isOpen, onClose }: 
       const newItem = await response.json();
       setItemName('');
       setItemType('item');
-      onClose();
+      props.onClose();
 
       // Pass the new item to parent for optimistic update
-      onItemAdded(newItem);
+      props.onItemAdded(newItem);
     } catch (err) {
       console.error('Hiba az elem hozzáadásakor:', err);
     } finally {
@@ -53,7 +53,7 @@ export default function AddItemForm({ parentId, onItemAdded, isOpen, onClose }: 
     }
   };
 
-  if (!isOpen) {
+  if (!props.isOpen) {
     return null;
   }
 
@@ -84,7 +84,7 @@ export default function AddItemForm({ parentId, onItemAdded, isOpen, onClose }: 
         <button
           type="button"
           onClick={() => {
-            onClose();
+            props.onClose();
             setItemName('');
             setItemType('item');
           }}

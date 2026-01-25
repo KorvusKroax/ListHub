@@ -2,31 +2,16 @@
 
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import ListItem from './ListItem';
-
-type ListNode = {
-  id: number;
-  name: string;
-  type: string;
-  isChecked: boolean;
-  error?: string;
-};
+import { ListNodeType, ListNode } from './ListNode';
 
 type ListNodeListProps = {
-  items: ListNode[];
+  items: ListNodeType[];
   onToggle: (id: number) => void;
   onDelete: (id: number) => void;
-  onPositionChange?: (itemId: number, newPosition: number) => void;
-  emptyMessage?: string;
+  onPositionChange?: (itemId: number, newPosition: number, newParentId?: number) => void;
 };
 
-export default function ListNodeList({
-  items,
-  onToggle,
-  onDelete,
-  onPositionChange,
-  emptyMessage = 'Nincs még elem ebben a listában.'
-}: ListNodeListProps) {
+export default function ListNodeList(props: ListNodeListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -37,41 +22,38 @@ export default function ListNodeList({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (over && active.id !== over.id && onPositionChange) {
-      const oldIndex = items.findIndex((item) => item.id === Number(active.id));
-      const newIndex = items.findIndex((item) => item.id === Number(over.id));
+    if (over && active.id !== over.id && props.onPositionChange) {
+      const oldIndex = props.items.findIndex((item) => item.id === Number(active.id));
+      const newIndex = props.items.findIndex((item) => item.id === Number(over.id));
 
       if (oldIndex !== -1 && newIndex !== -1) {
-        onPositionChange(Number(active.id), newIndex);
+        props.onPositionChange(Number(active.id), newIndex);
       }
     }
   };
 
-  if (items.length === 0) {
+  if (props.items.length === 0) {
     return (
       <div className="px-3 py-1 text-gray-500 italic">
-        {emptyMessage}
+        Nincs még elem ebben a listában.
       </div>
     );
   }
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={props.items.map(item => item.id)} strategy={verticalListSortingStrategy}>
         <ul className="space-y-0.5">
-          {items.map((item, index) => (
-            <ListItem
+          {props.items.map((item) => (
+            <ListNode
               key={item.id}
               id={item.id}
               name={item.name}
               type={item.type as 'item' | 'sublist'}
               isChecked={item.isChecked}
               error={item.error}
-              index={index}
-              totalItems={items.length}
-              onToggle={onToggle}
-              onDelete={onDelete}
-              onPositionChange={onPositionChange}
+              onToggle={props.onToggle}
+              onDelete={props.onDelete}
             />
           ))}
         </ul>

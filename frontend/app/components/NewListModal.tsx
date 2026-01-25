@@ -6,21 +6,20 @@ type NewListModalProps = {
   onSubmit: (name: string) => Promise<void>;
 };
 
-export default function NewListModal({ isOpen, onClose, onSubmit }: NewListModalProps) {
+export default function NewListModal(props: NewListModalProps) {
   const [listName, setListName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isOpen) return null;
-
+  if (!props.isOpen) return null;
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!listName.trim()) return;
 
     setIsSubmitting(true);
     try {
-      await onSubmit(listName);
+      await props.onSubmit(listName);
       setListName('');
-      onClose();
+      props.onClose();
     } catch (error) {
       console.error('Hiba a lista létrehozása során:', error);
     } finally {
@@ -34,7 +33,7 @@ export default function NewListModal({ isOpen, onClose, onSubmit }: NewListModal
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-gray-900">Új lista létrehozása</h2>
           <button
-            onClick={onClose}
+            onClick={props.onClose}
             className="text-gray-400 hover:text-gray-600 transition cursor-pointer"
             disabled={isSubmitting}
           >
@@ -65,7 +64,7 @@ export default function NewListModal({ isOpen, onClose, onSubmit }: NewListModal
           <div className="flex gap-3 justify-end">
             <button
               type="button"
-              onClick={onClose}
+              onClick={props.onClose}
               className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition duration-200 cursor-pointer disabled:cursor-not-allowed"
               disabled={isSubmitting}
             >
