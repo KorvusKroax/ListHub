@@ -30,13 +30,19 @@ export default function Sublist(props: SublistProps) {
       setLoading(true);
       fetchChildren(props.id)
         .then(data => {
-          const sorted = [...data].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+          // Handle empty data (newly created sublist)
+          const validData = Array.isArray(data) ? data : [];
+          const sorted = [...validData].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
           setChildren(sorted);
           setChildrenLoaded(true);
           setLoading(false);
+          console.log(`Sublist ${props.id} loaded ${sorted.length} children`);
         })
         .catch(err => {
           console.error('Hiba az elem betöltésekor:', err);
+          // Set empty array for newly created sublists
+          setChildren([]);
+          setChildrenLoaded(true);
           setLoading(false);
         });
     }
@@ -83,6 +89,62 @@ export default function Sublist(props: SublistProps) {
     }
   };
 
+  // Handle reordering within this sublist
+  const handleSublistReorder = async (draggedItemId: number, targetItemId: number) => {
+    if (!childrenLoaded || !isOpen) return;
+
+    const draggedIndex = children.findIndex(item => item.id === draggedItemId);
+    const targetIndex = children.findIndex(item => item.id === targetItemId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    console.log(`Sublist ${props.id}: Reordering item ${draggedItemId} from position ${draggedIndex} to ${targetIndex}`);
+
+    // Optimistic update - reorder immediately in UI
+    const newChildren = [...children];
+    const [draggedItem] = newChildren.splice(draggedIndex, 1);
+    newChildren.splice(targetIndex, 0, draggedItem);
+
+    // Update positions
+    const updatedChildren = newChildren.map((child, index) => ({
+      ...child,
+      position: index
+    }));
+
+    setChildren(updatedChildren);
+
+    try {
+      // API calls to update positions in backend
+      const positionUpdates = updatedChildren.map((child, index) =>
+        updateListNode(child.id, child.name, index)
+      );
+
+      await Promise.all(positionUpdates);
+      console.log(`Sublist ${props.id}: Reorder successful in backend`);
+    } catch (err) {
+      console.error(`Sublist ${props.id}: Backend reorder failed, reverting:`, err);
+      // On error, revert to original order by reloading
+      setChildrenLoaded(false);
+      if (isOpen) {
+        setLoading(true);
+        fetchChildren(props.id)
+          .then(data => {
+            const validData = Array.isArray(data) ? data : [];
+            const sorted = [...validData].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+            setChildren(sorted);
+            setChildrenLoaded(true);
+            setLoading(false);
+          })
+          .catch(fetchErr => {
+            console.error('Hiba az újratöltésekor:', fetchErr);
+            setChildren([]);
+            setChildrenLoaded(true);
+            setLoading(false);
+          });
+      }
+    }
+  };
+
   // Expose the optimistic move handler globally
   // This is a bit of a hack, but allows the parent component to call this function
   useEffect(() => {
@@ -90,11 +152,19 @@ export default function Sublist(props: SublistProps) {
       if (!window.sublistOptimisticHandlers) {
         window.sublistOptimisticHandlers = {};
       }
+      if (!window.sublistReorderHandlers) {
+        window.sublistReorderHandlers = {};
+      }
+
       window.sublistOptimisticHandlers[props.id] = handleOptimisticMove;
+      window.sublistReorderHandlers[props.id] = handleSublistReorder;
 
       return () => {
         if (window.sublistOptimisticHandlers) {
           delete window.sublistOptimisticHandlers[props.id];
+        }
+        if (window.sublistReorderHandlers) {
+          delete window.sublistReorderHandlers[props.id];
         }
       };
     }
@@ -130,7 +200,8 @@ export default function Sublist(props: SublistProps) {
       // Refresh children after successful deletion to get correct positions
       try {
         const refreshedChildren = await fetchChildren(props.id);
-        const sorted = [...refreshedChildren].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+        const validData = Array.isArray(refreshedChildren) ? refreshedChildren : [];
+        const sorted = [...validData].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
         setChildren(sorted);
       } catch (fetchErr) {
         console.error('Hiba az újratöltésekor:', fetchErr);
@@ -140,7 +211,8 @@ export default function Sublist(props: SublistProps) {
       // Refresh children on error
       try {
         const refreshedChildren = await fetchChildren(props.id);
-        setChildren(refreshedChildren.map((child: ListNodeType) => ({
+        const validData = Array.isArray(refreshedChildren) ? refreshedChildren : [];
+        setChildren(validData.map((child: ListNodeType) => ({
           ...child,
           error: 'Nem sikerült törölni'
         })));
@@ -180,7 +252,8 @@ export default function Sublist(props: SublistProps) {
       console.error('Hiba a pozícióváltáskor:', err);
       try {
         const refreshed = await fetchChildren(props.id);
-        const sorted = [...refreshed].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+        const validData = Array.isArray(refreshed) ? refreshed : [];
+        const sorted = [...validData].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
         setChildren(sorted);
       } catch (fetchErr) {
         console.error('Hiba a gyerekek újratöltésekor:', fetchErr);
@@ -191,7 +264,8 @@ export default function Sublist(props: SublistProps) {
   const handleItemCreated = async () => {
     try {
       const refreshed = await fetchChildren(props.id);
-      const sorted = [...refreshed].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+      const validData = Array.isArray(refreshed) ? refreshed : [];
+      const sorted = [...validData].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
       setChildren(sorted);
     } catch (err) {
       console.error('Hiba a gyerekek újratöltésekor:', err);
@@ -234,7 +308,7 @@ export default function Sublist(props: SublistProps) {
         {isOpen && (
           <div className="mt-2">
             {loading ? (
-              <div className="px-2 py-1 text-gray-500 italic">Betöltés...</div>
+              <div className="px-2 py-0.5 text-gray-500 italic">Betöltés...</div>
             ) : (
               <ListNodeList
                 parentId={props.id}

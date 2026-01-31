@@ -14,6 +14,9 @@ declare global {
     sublistOptimisticHandlers?: {
       [key: number]: (draggedItemId: number, draggedParentId: number, targetParentId: number, movedItem: any) => void;
     };
+    sublistReorderHandlers?: {
+      [key: number]: (draggedItemId: number, targetItemId: number) => void;
+    };
   }
 }
 
@@ -381,7 +384,67 @@ export default function ListDetailPage() {
         console.error('Error in optimistic update:', err);
       }
     } else if (!isCrossContainer) {
-      console.log('Same-container reordering not implemented yet');
+      console.log('Same-container reordering: implementing now');
+
+      // Handle reordering within the same container
+      const draggedParentId = draggedData?.parentId;
+
+      if (draggedParentId === Number(id)) {
+        // Reordering in mainlist
+        console.log('Reordering in mainlist');
+        handleMainListReorder(draggedItemId, targetItemId);
+      } else {
+        // Reordering in sublist - call the optimistic handler
+        console.log(`Reordering in sublist ${draggedParentId}`);
+        if (typeof window !== 'undefined' && window.sublistOptimisticHandlers) {
+          const handler = window.sublistOptimisticHandlers[draggedParentId];
+          if (typeof handler === 'function') {
+            // For same-container reordering, we call a special reorder function
+            if (window.sublistReorderHandlers && window.sublistReorderHandlers[draggedParentId]) {
+              window.sublistReorderHandlers[draggedParentId](draggedItemId, targetItemId);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  // Handle reordering within mainlist
+  const handleMainListReorder = async (draggedItemId: number, targetItemId: number) => {
+    if (!list?.children) return;
+
+    const children = [...list.children];
+    const draggedIndex = children.findIndex(item => item.id === draggedItemId);
+    const targetIndex = children.findIndex(item => item.id === targetItemId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    console.log(`Reordering in mainlist: moving item ${draggedItemId} from position ${draggedIndex} to ${targetIndex}`);
+
+    // Optimistic update - reorder immediately in UI
+    const [draggedItem] = children.splice(draggedIndex, 1);
+    children.splice(targetIndex, 0, draggedItem);
+
+    // Update positions
+    const updatedChildren = children.map((child, index) => ({
+      ...child,
+      position: index
+    }));
+
+    setList(prev => prev ? { ...prev, children: updatedChildren } : prev);
+
+    try {
+      // API calls to update positions in backend
+      const positionUpdates = updatedChildren.map((child, index) =>
+        updateListNode(child.id, child.name, index)
+      );
+
+      await Promise.all(positionUpdates);
+      console.log('Mainlist reorder successful in backend');
+    } catch (err) {
+      console.error('Backend reorder failed, refreshing:', err);
+      // On error, refresh the list to get correct positions
+      window.location.reload();
     }
   };
 

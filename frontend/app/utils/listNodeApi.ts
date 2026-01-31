@@ -127,7 +127,14 @@ export async function fetchChildren(parentId: number) {
   });
 
   if (!response.ok) {
-    throw new Error('Nem sikerült betölteni');
+    // If 404, it means the sublist has no children yet - return empty array
+    if (response.status === 404) {
+      console.log(`Sublist ${parentId} has no children yet, returning empty array`);
+      return [];
+    }
+
+    console.error(`Failed to fetch children for ${parentId}:`, response.status, response.statusText);
+    throw new Error(`Nem sikerült betölteni (${response.status})`);
   }
 
   return response.json();

@@ -57,7 +57,7 @@ export default function ListNodeList(props: ListNodeListProps) {
           refreshTrigger={props.refreshTrigger}
         />
       ))) : (
-        <li className="px-2 py-1 text-gray-500 italic">
+        <li className="px-2 py-0.5 text-gray-500 italic">
           Nincs még elem ebben a listában.
         </li>
       )}
