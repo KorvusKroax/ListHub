@@ -63,6 +63,31 @@ export async function updateListNode(nodeId: number, name: string, position?: nu
   }
 }
 
+export async function moveListNode(nodeId: number, newParentId: number, newPosition?: number): Promise<void> {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('Nincs token');
+  }
+
+  const body: any = { parentId: newParentId };
+  if (newPosition !== undefined) {
+    body.position = newPosition;
+  }
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/listnodes/${nodeId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error('Nem sikerült átmozgatni');
+  }
+}
+
 export async function createListNode(parentId: number, name: string, type: string = 'item'): Promise<any> {
   const token = localStorage.getItem('token');
   if (!token) {

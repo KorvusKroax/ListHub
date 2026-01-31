@@ -2,12 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-// import AddItemForm from '@/app/components/AddItemForm';
+import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import ListNodeList from '@/app/components/ListNodeList';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
-import { toggleListNode, deleteListNode, fetchChildren, updateListNode } from '@/app/utils/listNodeApi';
-// import AddListNodeForm from '@/app/components/AddListNodeForm';
+import { toggleListNode, deleteListNode, fetchChildren, updateListNode, moveListNode } from '@/app/utils/listNodeApi';
 import { ListNodeType } from '@/app/components/ListNode';
+
+// TypeScript declaration for global window object
+declare global {
+  interface Window {
+    sublistOptimisticHandlers?: {
+      [key: number]: (draggedItemId: number, draggedParentId: number, targetParentId: number, movedItem: any) => void;
+    };
+  }
+}
 
 export default function ListDetailPage() {
   const router = useRouter();
@@ -16,9 +24,9 @@ export default function ListDetailPage() {
   const [list, setList] = useState<ListNodeType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  // const [showAddForm, setShowAddForm] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editListName, setEditListName] = useState('');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -108,36 +116,6 @@ export default function ListDetailPage() {
       </main>
     );
   }
-
-  const handleListNodeAdded = (newItem: ListNodeType) => {
-    // setShowAddForm(false);
-
-    // Optimistic update - add item immediately
-    setList(prev => {
-      if (!prev) return prev;
-      const updatedChildren = [...(prev.children || []), { ...newItem, error: undefined }];
-      return { ...prev, children: updatedChildren };
-    });
-
-    // Validate by refreshing children
-    fetchChildren(Number(id))
-      .then(children => {
-        // Sort children by position
-        children.sort((a: ListNodeType, b: ListNodeType) => a.position - b.position);
-        setList(prev => prev ? { ...prev, children } : null);
-      })
-      .catch(err => {
-        // Mark the item with error if refresh fails
-        console.error('Hiba az elemek frissítésekor:', err);
-        setList(prev => {
-          if (!prev?.children) return prev;
-          const updated = prev.children.map(item =>
-            item.id === newItem.id ? { ...item, error: 'Nem sikerült menteni' } : item
-          );
-          return { ...prev, children: updated };
-        });
-      });
-  };
 
   const handleToggleItem = async (itemId: number) => {
     const item = list?.children?.find(i => i.id === itemId);
@@ -298,6 +276,159 @@ export default function ListDetailPage() {
     }
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over) {
+      console.log('Drag cancelled - no target');
+      return;
+    }
+
+    const draggedItemId = Number(active.id);
+    const targetItemId = Number(over.id);
+
+    // Get data from drag elements
+    const draggedData = active.data.current;
+    const targetData = over.data.current;
+
+    // Same item - do nothing
+    if (draggedItemId === targetItemId) {
+      return;
+    }
+
+    const draggedParentId = draggedData?.parentId;
+    const targetParentId = targetData?.parentId;
+    const isCrossContainer = draggedParentId !== targetParentId;
+
+    console.log('Hierarchikus Drag & Drop:', {
+      draggedItem: {
+        id: draggedItemId,
+        parentId: draggedParentId,
+        name: draggedData?.name,
+        type: draggedData?.type
+      },
+      targetItem: {
+        id: targetItemId,
+        parentId: targetParentId,
+        name: targetData?.name,
+        type: targetData?.type
+      },
+      crossContainer: isCrossContainer,
+      action: isCrossContainer ? 'MOVE_TO_DIFFERENT_LIST' : 'REORDER_IN_SAME_LIST'
+    });
+
+    // Only implement cross-container moves for now
+    if (isCrossContainer && targetParentId !== undefined) {
+      try {
+        console.log(`Moving item ${draggedItemId} from parent ${draggedParentId} to parent ${targetParentId}`);
+
+        // OPTIMISTIC UPDATE - Update UI immediately
+        const movedItem = {
+          id: draggedItemId,
+          name: draggedData?.name || 'Unknown',
+          type: draggedData?.type || 'item',
+          isChecked: draggedData?.isChecked || false,
+          position: 0, // Will be updated by backend
+          parentId: targetParentId,
+        };
+
+        // If moving FROM mainlist - remove from mainlist children
+        if (draggedParentId === Number(id)) {
+          setList(prev => {
+            if (!prev?.children) return prev;
+            const filtered = prev.children.filter(child => child.id !== draggedItemId);
+            return { ...prev, children: filtered };
+          });
+        }
+
+        // If moving TO mainlist - add to mainlist children
+        if (targetParentId === Number(id)) {
+          setList(prev => {
+            if (!prev) return prev;
+            const newChildren = [...(prev.children || []), movedItem];
+            return { ...prev, children: newChildren };
+          });
+        }
+
+        // Call optimistic handlers for affected sublists instead of refresh trigger
+        const mainListId = Number(id);
+        if (draggedParentId !== mainListId || targetParentId !== mainListId) {
+          console.log('Calling optimistic handlers for sublists');
+
+          // Use the globally registered optimistic handlers
+          if (typeof window !== 'undefined' && window.sublistOptimisticHandlers) {
+            // Call handlers for all sublists that might be affected
+            Object.values(window.sublistOptimisticHandlers).forEach(handler => {
+              if (typeof handler === 'function') {
+                handler(draggedItemId, draggedParentId, targetParentId, movedItem);
+              }
+            });
+          }
+        }
+        // API call to move the item (in background)
+        moveListNode(draggedItemId, targetParentId)
+          .then(() => {
+            console.log('Move successful in backend');
+          })
+          .catch(err => {
+            console.error('Backend move failed, rolling back:', err);
+            // Rollback optimistic update
+            rollbackItemMove(draggedItemId, draggedParentId, targetParentId);
+            alert('Nem sikerült átmozgatni az elemet');
+          });
+
+      } catch (err) {
+        console.error('Error in optimistic update:', err);
+      }
+    } else if (!isCrossContainer) {
+      console.log('Same-container reordering not implemented yet');
+    }
+  };
+
+  // Event handler for item moved
+  const handleItemMoved = (itemId: number, fromParentId: number, toParentId: number, movedItem: any) => {
+    console.log(`Event: Item ${itemId} moved from ${fromParentId} to ${toParentId}`);
+    // This will be passed to sublists via props
+  };
+
+  // Rollback function for failed moves
+  const rollbackItemMove = (itemId: number, fromParentId: number, toParentId: number) => {
+    console.log(`Rolling back move of item ${itemId}`);
+
+    const mainListId = Number(id);
+
+    // If was moved FROM mainlist, add it back
+    if (fromParentId === mainListId) {
+      console.log('Rolling back: Adding item back to mainlist');
+      // We would need the original item data to add it back properly
+      // For now, just trigger a full refresh
+      window.location.reload();
+    }
+
+    // If was moved TO mainlist, remove from mainlist
+    if (toParentId === mainListId) {
+      setList(prev => {
+        if (!prev?.children) return prev;
+        const filtered = prev.children.filter(child => child.id !== itemId);
+        return { ...prev, children: filtered };
+      });
+    }
+
+    // Send rollback to optimistic handlers instead of refresh trigger
+    if (fromParentId !== mainListId || toParentId !== mainListId) {
+      console.log('Calling rollback on optimistic handlers');
+
+      if (typeof window !== 'undefined' && window.sublistOptimisticHandlers) {
+        // For rollback, we swap the from/to parameters to reverse the move
+        Object.values(window.sublistOptimisticHandlers).forEach(handler => {
+          if (typeof handler === 'function') {
+            handler(itemId, toParentId, fromParentId, null); // null because we're removing
+          }
+        });
+      }
+    }
+  };
+
   const handleShareList = () => {
     // For simplicity, just alert the share link
     const shareLink = `${window.location.origin}/lists/${id}`;
@@ -365,14 +496,17 @@ export default function ListDetailPage() {
 
         <div className="space-y-4">
           {list.children && (
-            <ListNodeList
-              parentId={Number(id)}
-              items={list.children}
-              onToggle={handleToggleItem}
-              onDelete={handleDeleteItem}
-              onPositionChange={handlePositionChange}
-              onItemCreated={handleItemCreated}
-            />
+            <DndContext onDragEnd={handleDragEnd}>
+              <ListNodeList
+                parentId={Number(id)}
+                items={list.children}
+                onToggle={handleToggleItem}
+                onDelete={handleDeleteItem}
+                onPositionChange={handlePositionChange}
+                onItemCreated={handleItemCreated}
+                refreshTrigger={refreshTrigger}
+              />
+            </DndContext>
           )}
 
         </div>

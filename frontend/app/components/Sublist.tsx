@@ -15,6 +15,7 @@ type SublistProps = {
   setEditName: (name: string) => void;
   handleSaveEdit: () => void;
   handleCancelEdit: () => void;
+  refreshTrigger?: number;
 };
 
 export default function Sublist(props: SublistProps) {
@@ -41,7 +42,66 @@ export default function Sublist(props: SublistProps) {
     }
   }, [isOpen, props.id, childrenLoaded]);
 
+  // Refresh when refreshTrigger changes - implement optimistic updates
+  useEffect(() => {
+    if (props.refreshTrigger && isOpen && childrenLoaded) {
+      console.log(`Sublist ${props.id}: Trigger changed, checking if refresh needed`);
+      // Instead of always reloading, we implement optimistic updates
+      // Only reload if we can't handle the change optimistically
+
+      // For drag and drop moves, we should get the item data from global state
+      // and update our local state accordingly, rather than reloading from DB
+
+      // TODO: Implement proper optimistic updates here
+      // For now, we'll skip the automatic reload and rely on optimistic updates
+      // from the drag and drop system
+
+      console.log(`Sublist ${props.id}: Skipping automatic reload, using optimistic updates`);
+    }
+  }, [props.refreshTrigger, props.id, isOpen, childrenLoaded]);
+
+  // Handle optimistic updates for drag and drop
+  const handleOptimisticMove = (draggedItemId: number, draggedParentId: number, targetParentId: number, movedItem: any) => {
+    if (!childrenLoaded || !isOpen) return;
+
+    // If item is being moved FROM this sublist
+    if (draggedParentId === props.id) {
+      console.log(`Sublist ${props.id}: Removing item ${draggedItemId} (moved to ${targetParentId})`);
+      setChildren(prev => prev.filter(child => child.id !== draggedItemId));
+    }
+
+    // If item is being moved TO this sublist
+    if (targetParentId === props.id && movedItem) {
+      console.log(`Sublist ${props.id}: Adding item ${draggedItemId} (moved from ${draggedParentId})`);
+      setChildren(prev => {
+        // Check if item already exists (avoid duplicates)
+        if (prev.some(child => child.id === draggedItemId)) {
+          return prev;
+        }
+        return [...prev, movedItem];
+      });
+    }
+  };
+
+  // Expose the optimistic move handler globally
+  // This is a bit of a hack, but allows the parent component to call this function
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (!window.sublistOptimisticHandlers) {
+        window.sublistOptimisticHandlers = {};
+      }
+      window.sublistOptimisticHandlers[props.id] = handleOptimisticMove;
+
+      return () => {
+        if (window.sublistOptimisticHandlers) {
+          delete window.sublistOptimisticHandlers[props.id];
+        }
+      };
+    }
+  }, [props.id, childrenLoaded, isOpen]);
+
   const handleToggle = async (childId: number) => {
+    // Find the child in our current state
     const child = children.find(c => c.id === childId);
     if (!child) return;
 
@@ -53,10 +113,10 @@ export default function Sublist(props: SublistProps) {
     try {
       await toggleListNode(childId, child.isChecked);
     } catch (err) {
-      console.error('Hiba az elem frissítésekor:', err);
-      // Revert on error
+      console.error('Hiba a toggle-nél:', err);
+      // Revert the optimistic update
       setChildren(prev => prev.map(c =>
-        c.id === childId ? { ...c, isChecked: !c.isChecked, error: 'Nem sikerült frissíteni' } : c
+        c.id === childId ? { ...c, isChecked: child.isChecked, error: 'Nem sikerült frissíteni' } : c
       ));
     }
   };
@@ -183,6 +243,7 @@ export default function Sublist(props: SublistProps) {
                 onDelete={handleDelete}
                 onPositionChange={handlePositionChange}
                 onItemCreated={handleItemCreated}
+                refreshTrigger={props.refreshTrigger}
               />
             )}
           </div>

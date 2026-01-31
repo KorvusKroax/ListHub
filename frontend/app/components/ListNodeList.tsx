@@ -10,6 +10,7 @@ type ListNodeListProps = {
   onDelete: (id: number) => void;
   onPositionChange?: (itemId: number, newPosition: number, newParentId?: number) => void;
   onItemCreated?: () => Promise<void>;
+  refreshTrigger?: number;
 };
 
 export default function ListNodeList(props: ListNodeListProps) {
@@ -50,8 +51,10 @@ export default function ListNodeList(props: ListNodeListProps) {
           type={item.type as 'item' | 'sublist'}
           isChecked={item.isChecked}
           error={item.error}
+          parentId={props.parentId}
           onToggle={props.onToggle}
           onDelete={props.onDelete}
+          refreshTrigger={props.refreshTrigger}
         />
       ))) : (
         <li className="px-2 py-1 text-gray-500 italic">

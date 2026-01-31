@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { updateListNode, createListNode } from '@/app/utils/listNodeApi';
 import Item from './Item';
 import Sublist from './Sublist';
@@ -28,12 +29,54 @@ type ListNodeProps = {
   onToggle?: (id: number) => void;
   onDelete?: (id: number) => void;
   onCreated?: (tempId: number) => Promise<void>;
+  refreshTrigger?: number;
 };
 
 export function ListNode(props: ListNodeProps) {
   const [isEditing, setIsEditing] = useState(props.isEditing || false);
   const [editName, setEditName] = useState(props.name);
   const [displayName, setDisplayName] = useState(props.name);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    transform,
+  } = useDraggable({
+    id: props.id,
+    data: {
+      name: props.name,
+      type: props.type,
+      parentId: props.parentId,
+      isChecked: props.isChecked
+    }
+  });
+
+  const {
+    setNodeRef: setDropRef,
+    isOver,
+  } = useDroppable({
+    id: props.id,
+    data: {
+      name: props.name,
+      type: props.type,
+      parentId: props.parentId,
+      isChecked: props.isChecked
+    }
+  });
+
+  // Combine both refs
+  const setNodeRef = (node: HTMLElement | null) => {
+    setDragRef(node);
+    setDropRef(node);
+  };
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    backgroundColor: isOver ? '#f0f9ff' : undefined, // Light blue when hovered
+  } : {
+    backgroundColor: isOver ? '#f0f9ff' : undefined,
+  };
 
   useEffect(() => {
     setDisplayName(props.name);
@@ -81,8 +124,24 @@ export function ListNode(props: ListNodeProps) {
   };
 
   return (
-    <li className="py-1">
+    <li ref={setNodeRef} style={style} className="py-1">
       <div className="flex items-center gap-3">
+        <button
+          {...attributes}
+          {...listeners}
+          className="self-start p-1 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+          title="Húzd az elem mozgatásához"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="7" cy="6" r="1.5" />
+            <circle cx="7" cy="12" r="1.5" />
+            <circle cx="7" cy="18" r="1.5" />
+            <circle cx="13" cy="6" r="1.5" />
+            <circle cx="13" cy="12" r="1.5" />
+            <circle cx="13" cy="18" r="1.5" />
+          </svg>
+        </button>
+
         {props.type === 'item' ? (
           <Item
             id={props.id}
@@ -106,6 +165,7 @@ export function ListNode(props: ListNodeProps) {
             setEditName={setEditName}
             handleSaveEdit={handleSaveEdit}
             handleCancelEdit={handleCancelEdit}
+            refreshTrigger={props.refreshTrigger}
           />
         )}
 
