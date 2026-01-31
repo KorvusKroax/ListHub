@@ -172,7 +172,7 @@ export default function Sublist(props: SublistProps) {
         )}
 
         {isOpen && (
-          <div className="-ml-10 mt-2">
+          <div className="mt-2">
             {loading ? (
               <div className="px-2 py-1 text-gray-500 italic">Betöltés...</div>
             ) : (

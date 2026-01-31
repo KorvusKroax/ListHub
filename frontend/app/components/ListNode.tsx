@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { updateListNode, createListNode } from '@/app/utils/listNodeApi';
 import Item from './Item';
 import Sublist from './Sublist';
@@ -36,21 +34,6 @@ export function ListNode(props: ListNodeProps) {
   const [isEditing, setIsEditing] = useState(props.isEditing || false);
   const [editName, setEditName] = useState(props.name);
   const [displayName, setDisplayName] = useState(props.name);
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: props.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
 
   useEffect(() => {
     setDisplayName(props.name);
@@ -98,24 +81,8 @@ export function ListNode(props: ListNodeProps) {
   };
 
   return (
-    <li ref={setNodeRef} style={style} className="py-1">
+    <li className="py-1">
       <div className="flex items-center gap-3">
-        <button
-          {...attributes}
-          {...listeners}
-          className="self-start p-1 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
-          title="Húzd az elem mozgatásához"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="7" cy="6" r="1.5" />
-            <circle cx="7" cy="12" r="1.5" />
-            <circle cx="7" cy="18" r="1.5" />
-            <circle cx="13" cy="6" r="1.5" />
-            <circle cx="13" cy="12" r="1.5" />
-            <circle cx="13" cy="18" r="1.5" />
-          </svg>
-        </button>
-
         {props.type === 'item' ? (
           <Item
             id={props.id}
