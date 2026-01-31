@@ -12,7 +12,7 @@ import { ListNodeType } from '@/app/components/ListNode';
 declare global {
   interface Window {
     sublistOptimisticHandlers?: {
-      [key: number]: (draggedItemId: number, draggedParentId: number, targetParentId: number, movedItem: any) => void;
+      [key: number]: (draggedItemId: number, draggedParentId: number, targetParentId: number, movedItem: any, targetItemId?: number) => void;
     };
     sublistReorderHandlers?: {
       [key: number]: (draggedItemId: number, targetItemId: number) => void;
@@ -344,11 +344,23 @@ export default function ListDetailPage() {
           });
         }
 
-        // If moving TO mainlist - add to mainlist children
+        // If moving TO mainlist - add to mainlist children at correct position
         if (targetParentId === Number(id)) {
           setList(prev => {
             if (!prev) return prev;
-            const newChildren = [...(prev.children || []), movedItem];
+            const children = prev.children || [];
+
+            // If we have a target item, insert after it
+            const targetIndex = children.findIndex(child => child.id === targetItemId);
+            if (targetIndex !== -1) {
+              const newChildren = [...children];
+              // Insert after the target item
+              newChildren.splice(targetIndex + 1, 0, movedItem);
+              return { ...prev, children: newChildren.map((child, index) => ({ ...child, position: index })) };
+            }
+
+            // Fallback: add to end
+            const newChildren = [...children, movedItem];
             return { ...prev, children: newChildren };
           });
         }
@@ -356,16 +368,23 @@ export default function ListDetailPage() {
         // Call optimistic handlers for affected sublists instead of refresh trigger
         const mainListId = Number(id);
         if (draggedParentId !== mainListId || targetParentId !== mainListId) {
-          console.log('Calling optimistic handlers for sublists');
+          console.log('Calling optimistic handlers for specific sublists');
 
           // Use the globally registered optimistic handlers
           if (typeof window !== 'undefined' && window.sublistOptimisticHandlers) {
-            // Call handlers for all sublists that might be affected
-            Object.values(window.sublistOptimisticHandlers).forEach(handler => {
-              if (typeof handler === 'function') {
-                handler(draggedItemId, draggedParentId, targetParentId, movedItem);
-              }
-            });
+            // Call handlers only for the specific sublists that are affected
+
+            // Handle the source sublist (if not mainlist)
+            if (draggedParentId !== mainListId && window.sublistOptimisticHandlers[draggedParentId]) {
+              console.log(`Calling handler for source sublist ${draggedParentId}`);
+              window.sublistOptimisticHandlers[draggedParentId](draggedItemId, draggedParentId, targetParentId, movedItem, targetItemId);
+            }
+
+            // Handle the target sublist (if not mainlist and different from source)
+            if (targetParentId !== mainListId && targetParentId !== draggedParentId && window.sublistOptimisticHandlers[targetParentId]) {
+              console.log(`Calling handler for target sublist ${targetParentId}`);
+              window.sublistOptimisticHandlers[targetParentId](draggedItemId, draggedParentId, targetParentId, movedItem, targetItemId);
+            }
           }
         }
         // API call to move the item (in background)
@@ -483,11 +502,19 @@ export default function ListDetailPage() {
 
       if (typeof window !== 'undefined' && window.sublistOptimisticHandlers) {
         // For rollback, we swap the from/to parameters to reverse the move
-        Object.values(window.sublistOptimisticHandlers).forEach(handler => {
-          if (typeof handler === 'function') {
-            handler(itemId, toParentId, fromParentId, null); // null because we're removing
-          }
-        });
+        // Call handlers only for specific sublists that are affected
+
+        // Handle the original source sublist (now target for rollback)
+        if (fromParentId !== mainListId && window.sublistOptimisticHandlers[fromParentId]) {
+          console.log(`Calling rollback handler for original source sublist ${fromParentId}`);
+          window.sublistOptimisticHandlers[fromParentId](itemId, toParentId, fromParentId, null, undefined);
+        }
+
+        // Handle the original target sublist (now source for rollback)
+        if (toParentId !== mainListId && toParentId !== fromParentId && window.sublistOptimisticHandlers[toParentId]) {
+          console.log(`Calling rollback handler for original target sublist ${toParentId}`);
+          window.sublistOptimisticHandlers[toParentId](itemId, toParentId, fromParentId, null, undefined);
+        }
       }
     }
   };

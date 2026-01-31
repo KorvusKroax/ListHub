@@ -67,7 +67,7 @@ export default function Sublist(props: SublistProps) {
   }, [props.refreshTrigger, props.id, isOpen, childrenLoaded]);
 
   // Handle optimistic updates for drag and drop
-  const handleOptimisticMove = (draggedItemId: number, draggedParentId: number, targetParentId: number, movedItem: any) => {
+  const handleOptimisticMove = (draggedItemId: number, draggedParentId: number, targetParentId: number, movedItem: any, targetItemId?: number) => {
     if (!childrenLoaded || !isOpen) return;
 
     // If item is being moved FROM this sublist
@@ -78,12 +78,25 @@ export default function Sublist(props: SublistProps) {
 
     // If item is being moved TO this sublist
     if (targetParentId === props.id && movedItem) {
-      console.log(`Sublist ${props.id}: Adding item ${draggedItemId} (moved from ${draggedParentId})`);
+      console.log(`Sublist ${props.id}: Adding item ${draggedItemId} (moved from ${draggedParentId}) ${targetItemId ? `after item ${targetItemId}` : 'at end'}`);
       setChildren(prev => {
         // Check if item already exists (avoid duplicates)
         if (prev.some(child => child.id === draggedItemId)) {
           return prev;
         }
+
+        // If we have a targetItemId, insert after that item
+        if (targetItemId) {
+          const targetIndex = prev.findIndex(child => child.id === targetItemId);
+          if (targetIndex !== -1) {
+            const newChildren = [...prev];
+            // Insert after the target item
+            newChildren.splice(targetIndex + 1, 0, movedItem);
+            return newChildren.map((child, index) => ({ ...child, position: index }));
+          }
+        }
+
+        // Fallback: add to end
         return [...prev, movedItem];
       });
     }
